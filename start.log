@@ -1,0 +1,36 @@
+🚀 Starting Speech Recognition HCI Lab...
+
+[0;36mStarting FastAPI Backend...[0m
+[0;32m✓ Backend started (PID: 99444)[0m
+
+/Users/abdu07/Desktop/PGE5/UI_FUN/venv/lib/python3.9/site-packages/urllib3/__init__.py:35: NotOpenSSLWarning: urllib3 v2 only supports OpenSSL 1.1.1+, currently the 'ssl' module is compiled with 'LibreSSL 2.8.3'. See: https://github.com/urllib3/urllib3/issues/3020
+  warnings.warn(
+INFO:     Started server process [99444]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+[0;35mStarting React Frontend...[0m
+[0;32m✓ Frontend started (PID: 99449)[0m
+
+======================================
+[0;36m🎤 Speech Recognition Lab is running![0m
+======================================
+
+Backend API: [0;36mhttp://localhost:8000[0m
+Frontend UI: [0;35mhttp://localhost:5173[0m
+API Docs: [0;36mhttp://localhost:8000/docs[0m
+
+Press Ctrl+C to stop all servers
+
+
+> frontend@0.0.0 dev
+> vite
+
+
+  VITE v7.3.0  ready in 142 ms
+
+  ➜  Local:   http://localhost:5173/
+  ➜  Network: use --host to expose
+2:12:06 PM [vite] .env changed, restarting server...
+2:12:06 PM [vite] .env changed, restarting server...
+2:12:06 PM [vite] server restarted.

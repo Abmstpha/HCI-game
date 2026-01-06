@@ -42,11 +42,39 @@ class AccuracyResponse(BaseModel):
     accuracy: float
 
 # Helper Functions
+import unicodedata
+import string
+
+# Helper Functions
 def calculate_accuracy(original: str, result: str) -> float:
-    """Calculate similarity ratio between two strings"""
-    original = original.lower().strip()
-    result = result.lower().strip()
-    return difflib.SequenceMatcher(None, original, result).ratio() * 100
+    """
+    Calculate similarity ratio between two strings using robust normalization.
+    1. Normalize Unicode (NFC)
+    2. Remove punctuation (including common non-English ones)
+    3. Normalize whitespace
+    4. Case fold
+    """
+    def clean_text(text: str) -> str:
+        # Normalize unicode
+        text = unicodedata.normalize('NFC', text)
+        # Remove punctuation (add Hindi danda '।', and others if needed)
+        punctuation = string.punctuation + "।" + "،" + "؟"
+        translator = str.maketrans('', '', punctuation)
+        text = text.translate(translator)
+        # Normalize whitespace and case
+        return " ".join(text.split()).lower()
+
+    original_clean = clean_text(original)
+    result_clean = clean_text(result)
+    
+    # If both are empty after cleaning, return 100% (or 0% if they were supposed to be non-empty?)
+    # Assuming valid attempts:
+    if not original_clean and not result_clean:
+        return 100.0
+    if not original_clean: 
+        return 0.0
+
+    return difflib.SequenceMatcher(None, original_clean, result_clean).ratio() * 100
 
 # Routes
 @app.get("/")

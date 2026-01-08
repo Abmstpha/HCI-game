@@ -431,6 +431,55 @@ def get_status(stream_type: str):
     except ImportError:
         return {"status": "error", "message": "Streaming module not loaded"}
 
+# Frame processors for native camera approach
+frame_processors = {}
+
+@app.post("/process-frame")
+async def process_frame(
+    frame: UploadFile = File(...),
+    type: str = Form("gesture")
+):
+    """
+    Process a single frame from the browser's native camera.
+    Returns the detection results without streaming video.
+    """
+    if not STREAMING_AVAILABLE:
+        raise HTTPException(status_code=503, detail="Processing not available")
+    
+    try:
+        import cv2
+        import numpy as np
+        from games.streaming import HandGestureStream, PoseStream, EmotionStream, get_stream_status
+        
+        # Read the frame
+        frame_data = await frame.read()
+        nparr = np.frombuffer(frame_data, np.uint8)
+        img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+        
+        if img is None:
+            return {"status": "error", "message": "Invalid frame"}
+        
+        # Get or create processor
+        global frame_processors
+        if type not in frame_processors:
+            if type == "gesture":
+                frame_processors[type] = HandGestureStream()
+            elif type == "pose":
+                frame_processors[type] = PoseStream()
+            elif type == "emotion":
+                frame_processors[type] = EmotionStream()
+        
+        processor = frame_processors.get(type)
+        if processor:
+            # Process frame (updates global state)
+            processor.process_frame(img)
+        
+        # Return the current status
+        return get_stream_status(type)
+        
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8000)

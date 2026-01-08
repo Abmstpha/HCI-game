@@ -36,22 +36,115 @@ const VisionExperience = ({
     const [error, setError] = useState('')
     const [loading, setLoading] = useState(false)
     const [status, setStatus] = useState<StreamStatus>({ status: 'waiting', message: 'Waiting...' })
+    const useNativeCamera = true  // Always use native camera for best quality
+
+    const videoRef = useRef<HTMLVideoElement>(null)
+    const canvasRef = useRef<HTMLCanvasElement>(null)
+    const streamRef = useRef<MediaStream | null>(null)
     const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null)
+    const processingRef = useRef<ReturnType<typeof setInterval> | null>(null)
+
+    const startNativeCamera = async () => {
+        try {
+            // Request highest quality camera
+            const stream = await navigator.mediaDevices.getUserMedia({
+                video: {
+                    width: { ideal: 1920 },
+                    height: { ideal: 1080 },
+                    facingMode: 'user'
+                }
+            })
+
+            streamRef.current = stream
+
+            if (videoRef.current) {
+                videoRef.current.srcObject = stream
+                await videoRef.current.play()
+            }
+
+            setIsStreaming(true)
+            setLoading(false)
+
+            // Start sending frames to backend for processing
+            startFrameProcessing()
+
+        } catch (err) {
+            console.error('Camera error:', err)
+            setError('Could not access camera. Please allow camera permissions.')
+            setLoading(false)
+        }
+    }
+
+    const startFrameProcessing = () => {
+        // Send frames to backend every 300ms for AI processing
+        processingRef.current = setInterval(async () => {
+            if (!videoRef.current || !canvasRef.current) return
+
+            const video = videoRef.current
+            const canvas = canvasRef.current
+            const ctx = canvas.getContext('2d')
+
+            if (!ctx || video.videoWidth === 0) return
+
+            // Capture frame
+            canvas.width = video.videoWidth
+            canvas.height = video.videoHeight
+            ctx.drawImage(video, 0, 0)
+
+            // Convert to blob and send to backend
+            canvas.toBlob(async (blob) => {
+                if (!blob) return
+
+                try {
+                    const formData = new FormData()
+                    formData.append('frame', blob, 'frame.jpg')
+                    formData.append('type', statusKey)
+
+                    const response = await axios.post(
+                        `${API_URL}/process-frame`,
+                        formData,
+                        { timeout: 500 }
+                    )
+
+                    setStatus(response.data)
+                } catch (err) {
+                    // Silently handle - backend might be processing
+                }
+            }, 'image/jpeg', 0.8)
+        }, 300)
+    }
 
     const startStream = () => {
         setLoading(true)
         setError('')
-        setTimeout(() => {
-            setIsStreaming(true)
-            setLoading(false)
-            // Start polling for status
-            startPolling()
-        }, 500)
+
+        if (useNativeCamera) {
+            startNativeCamera()
+        } else {
+            // Fallback to MJPEG stream
+            setTimeout(() => {
+                setIsStreaming(true)
+                setLoading(false)
+                startPolling()
+            }, 500)
+        }
     }
 
     const stopStream = () => {
         setIsStreaming(false)
         stopPolling()
+
+        // Stop native camera
+        if (streamRef.current) {
+            streamRef.current.getTracks().forEach(track => track.stop())
+            streamRef.current = null
+        }
+
+        // Stop frame processing
+        if (processingRef.current) {
+            clearInterval(processingRef.current)
+            processingRef.current = null
+        }
     }
 
     const startPolling = () => {
@@ -73,7 +166,10 @@ const VisionExperience = ({
     }
 
     useEffect(() => {
-        return () => stopPolling()
+        return () => {
+            stopPolling()
+            stopStream()
+        }
     }, [])
 
     const getDetectedValue = () => {
@@ -200,15 +296,29 @@ const VisionExperience = ({
                             {/* Video Container */}
                             <div className="vision-video-wrapper">
                                 <div className="vision-video-container">
-                                    <img
-                                        src={`${API_URL}${streamEndpoint}`}
-                                        alt="Video Stream"
-                                        className="vision-video"
-                                        onError={() => {
-                                            setError('Failed to connect to camera.')
-                                            setIsStreaming(false)
-                                        }}
-                                    />
+                                    {useNativeCamera ? (
+                                        <>
+                                            <video
+                                                ref={videoRef}
+                                                className="vision-video"
+                                                autoPlay
+                                                playsInline
+                                                muted
+                                                style={{ transform: 'scaleX(-1)' }}
+                                            />
+                                            <canvas ref={canvasRef} style={{ display: 'none' }} />
+                                        </>
+                                    ) : (
+                                        <img
+                                            src={`${API_URL}${streamEndpoint}`}
+                                            alt="Video Stream"
+                                            className="vision-video"
+                                            onError={() => {
+                                                setError('Failed to connect to camera.')
+                                                setIsStreaming(false)
+                                            }}
+                                        />
+                                    )}
 
                                     <div className="vision-live-badge">
                                         <span className="live-dot"></span>

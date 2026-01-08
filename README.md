@@ -97,7 +97,7 @@ To objectively measure performance (HCI metric), we calculate the similarity bet
 
 ### Prerequisites
 
-- **FFmpeg** (Critical for audio conversion):
+* **FFmpeg** (Critical for audio conversion):
   * macOS: `brew install ffmpeg`
   * Linux: `sudo apt install ffmpeg`
 

@@ -97,7 +97,8 @@ jobs:
             --tag ${{ env.BACKEND_IMAGE }}:latest \
             --tag ${{ env.BACKEND_IMAGE }}:${{ github.sha }} \
             --project ${{ env.GCP_PROJECT_ID }} \
-            --timeout=30m
+            --timeout=30m \
+            --quiet
 
   build-frontend:
     name: Build Frontend
@@ -126,7 +127,8 @@ jobs:
           gcloud builds submit frontend \
             --config frontend/cloudbuild.yaml \
             --substitutions=_VITE_API_URL=https://hci-lab-api-142479529330.us-central1.run.app \
-            --project ${{ env.GCP_PROJECT_ID }}
+            --project ${{ env.GCP_PROJECT_ID }} \
+            --quiet
 
   # ============ DEPLOY JOB (After All Builds Complete) ============
   deploy:

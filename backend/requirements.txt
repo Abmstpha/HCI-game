@@ -101,3 +101,4 @@ scikit-learn
 soundfile
 zipp==3.23.0
 dlib
+nltk==3.9.1

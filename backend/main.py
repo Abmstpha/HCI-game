@@ -99,10 +99,20 @@ def calculate_accuracy(original: str, result: str) -> float:
     # Assuming valid attempts:
     if not original_clean and not result_clean:
         return 100.0
-    if not original_clean: 
+    
+    if not original_clean or not result_clean:
         return 0.0
-
-    return difflib.SequenceMatcher(None, original_clean, result_clean).ratio() * 100
+    
+    # Use BLEU score (industry-standard for translation/transcription quality)
+    # BLEU measures n-gram overlap between reference and hypothesis
+    reference = [original_clean.split()]  # List of token lists
+    hypothesis = result_clean.split()
+    
+    # Smoothing handles edge cases like very short sentences
+    smoothing = SmoothingFunction().method1
+    bleu_score = sentence_bleu(reference, hypothesis, smoothing_function=smoothing)
+    
+    return round(bleu_score * 100, 2)
 
 def calculate_word_accuracy(original: str, result: str) -> dict:
     """

@@ -120,7 +120,7 @@ class HandGestureStream:
         return frame
 
 
-# ============== POSE STREAM (CLEAN) ==============
+# ============== POSE STREAM (DETAILED SKELETON) ==============
 class PoseStream:
     def __init__(self):
         try:
@@ -134,11 +134,25 @@ class PoseStream:
             self.mp_draw = mp.solutions.drawing_utils
             self.mp_styles = mp.solutions.drawing_styles
 
+        # Use full body pose with higher model complexity for better tracking
         self.pose = self.mp_pose.Pose(
             min_detection_confidence=0.5,
             min_tracking_confidence=0.5,
-            model_complexity=1,
-            smooth_landmarks=True
+            model_complexity=2,  # Higher complexity = more detailed
+            smooth_landmarks=True,
+            enable_segmentation=False
+        )
+        
+        # Custom drawing specs for more visible skeleton
+        self.landmark_spec = self.mp_draw.DrawingSpec(
+            color=(0, 255, 0),  # Green landmarks
+            thickness=3,
+            circle_radius=4
+        )
+        self.connection_spec = self.mp_draw.DrawingSpec(
+            color=(255, 0, 255),  # Magenta connections
+            thickness=3,
+            circle_radius=2
         )
 
     def process_frame(self, frame):
@@ -150,17 +164,25 @@ class PoseStream:
         message = "Step back so I can see you"
         
         if results.pose_landmarks:
-            # Draw skeleton only (no text!)
+            # Draw full detailed skeleton with custom colors
             self.mp_draw.draw_landmarks(
                 frame, 
                 results.pose_landmarks,
                 self.mp_pose.POSE_CONNECTIONS,
-                landmark_drawing_spec=self.mp_styles.get_default_pose_landmarks_style()
+                landmark_drawing_spec=self.landmark_spec,
+                connection_drawing_spec=self.connection_spec
             )
             
+            # Also draw additional landmark circles for visibility
             landmarks = results.pose_landmarks.landmark
+            for idx, lm in enumerate(landmarks):
+                cx, cy = int(lm.x * w), int(lm.y * h)
+                # Draw larger circles on key joints
+                if idx in [0, 11, 12, 13, 14, 15, 16, 23, 24, 25, 26, 27, 28]:
+                    cv2.circle(frame, (cx, cy), 8, (0, 255, 255), cv2.FILLED)  # Yellow
+                    cv2.circle(frame, (cx, cy), 10, (255, 255, 255), 2)  # White border
             
-            # Get key points
+            # Get key points for pose detection
             nose = landmarks[self.mp_pose.PoseLandmark.NOSE]
             left_wrist = landmarks[self.mp_pose.PoseLandmark.LEFT_WRIST]
             right_wrist = landmarks[self.mp_pose.PoseLandmark.RIGHT_WRIST]

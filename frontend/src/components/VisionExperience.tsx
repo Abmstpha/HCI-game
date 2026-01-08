@@ -36,140 +36,124 @@ const VisionExperience = ({
     const [error, setError] = useState('')
     const [loading, setLoading] = useState(false)
     const [status, setStatus] = useState<StreamStatus>({ status: 'waiting', message: 'Waiting...' })
-    const useNativeCamera = true  // Always use native camera for best quality
 
+    // For gesture/pose: use MJPEG stream (with skeleton overlay)
+    // For emotion: use native camera (no overlay needed)
+    const needsMjpegStream = statusKey === 'gesture' || statusKey === 'pose'
+
+    // Native camera refs (for emotion)
     const videoRef = useRef<HTMLVideoElement>(null)
     const canvasRef = useRef<HTMLCanvasElement>(null)
     const streamRef = useRef<MediaStream | null>(null)
-    const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null)
     const processingRef = useRef<ReturnType<typeof setInterval> | null>(null)
+    const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
-    const startNativeCamera = async () => {
-        try {
-            // Request highest quality camera
-            const stream = await navigator.mediaDevices.getUserMedia({
-                video: {
-                    width: { ideal: 1920 },
-                    height: { ideal: 1080 },
-                    facingMode: 'user'
-                }
-            })
-
-            streamRef.current = stream
-
-            if (videoRef.current) {
-                videoRef.current.srcObject = stream
-                await videoRef.current.play()
-            }
-
-            setIsStreaming(true)
-            setLoading(false)
-
-            // Start sending frames to backend for processing
-            startFrameProcessing()
-
-        } catch (err) {
-            console.error('Camera error:', err)
-            setError('Could not access camera. Please allow camera permissions.')
-            setLoading(false)
-        }
-    }
-
-    const startFrameProcessing = () => {
-        // Send frames to backend every 300ms for AI processing
-        processingRef.current = setInterval(async () => {
-            if (!videoRef.current || !canvasRef.current) return
-
-            const video = videoRef.current
-            const canvas = canvasRef.current
-            const ctx = canvas.getContext('2d')
-
-            if (!ctx || video.videoWidth === 0) return
-
-            // Capture frame
-            canvas.width = video.videoWidth
-            canvas.height = video.videoHeight
-            ctx.drawImage(video, 0, 0)
-
-            // Convert to blob and send to backend
-            canvas.toBlob(async (blob) => {
-                if (!blob) return
-
-                try {
-                    const formData = new FormData()
-                    formData.append('frame', blob, 'frame.jpg')
-                    formData.append('type', statusKey)
-
-                    const response = await axios.post(
-                        `${API_URL}/process-frame`,
-                        formData,
-                        { timeout: 500 }
-                    )
-
-                    setStatus(response.data)
-                } catch (err) {
-                    // Silently handle - backend might be processing
-                }
-            }, 'image/jpeg', 0.8)
-        }, 300)
-    }
-
-    const startStream = () => {
+    // ========== MJPEG STREAM MODE (gesture/pose) ==========
+    const startMjpegStream = () => {
         setLoading(true)
         setError('')
-
-        if (useNativeCamera) {
-            startNativeCamera()
-        } else {
-            // Fallback to MJPEG stream
-            setTimeout(() => {
-                setIsStreaming(true)
-                setLoading(false)
-                startPolling()
-            }, 500)
-        }
-    }
-
-    const stopStream = () => {
-        setIsStreaming(false)
-        stopPolling()
-
-        // Stop native camera
-        if (streamRef.current) {
-            streamRef.current.getTracks().forEach(track => track.stop())
-            streamRef.current = null
-        }
-
-        // Stop frame processing
-        if (processingRef.current) {
-            clearInterval(processingRef.current)
-            processingRef.current = null
-        }
+        // The <img> tag will automatically start streaming
+        setTimeout(() => {
+            setLoading(false)
+            startPolling()
+        }, 1000)
     }
 
     const startPolling = () => {
         pollingRef.current = setInterval(async () => {
             try {
                 const response = await axios.get(`${API_URL}/stream/${statusKey}/status`)
-                setStatus(response.data)
+                if (response.data) {
+                    setStatus(response.data)
+                }
             } catch (err) {
-                // Silently handle polling errors
+                // Silently handle
             }
         }, 300)
     }
 
-    const stopPolling = () => {
-        if (pollingRef.current) {
-            clearInterval(pollingRef.current)
-            pollingRef.current = null
+    // ========== NATIVE CAMERA MODE (emotion) ==========
+    const startNativeCamera = async (videoElement: HTMLVideoElement) => {
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({
+                video: { width: { ideal: 1280 }, height: { ideal: 720 }, facingMode: 'user' }
+            })
+            streamRef.current = stream
+            videoElement.srcObject = stream
+            videoElement.onloadedmetadata = () => {
+                videoElement.play()
+                setLoading(false)
+                startFrameProcessing()
+            }
+        } catch (err) {
+            console.error('Camera error:', err)
+            setError('Could not access camera.')
+            setLoading(false)
+            setIsStreaming(false)
         }
     }
 
-    useEffect(() => {
-        return () => {
-            stopPolling()
-            stopStream()
+    const startFrameProcessing = () => {
+        processingRef.current = setInterval(async () => {
+            if (!videoRef.current || !canvasRef.current) return
+            const video = videoRef.current
+            const canvas = canvasRef.current
+            const ctx = canvas.getContext('2d')
+            if (!ctx || video.videoWidth === 0) return
+
+            canvas.width = video.videoWidth
+            canvas.height = video.videoHeight
+            ctx.drawImage(video, 0, 0)
+
+            canvas.toBlob(async (blob) => {
+                if (!blob) return
+                try {
+                    const formData = new FormData()
+                    formData.append('frame', blob, 'frame.jpg')
+                    formData.append('type', statusKey)
+                    const response = await axios.post(`${API_URL}/process-frame`, formData, { timeout: 2000 })
+                    if (response.data && response.data.status !== 'error') {
+                        setStatus(response.data)
+                    }
+                } catch (err) {
+                    // Silently handle
+                }
+            }, 'image/jpeg', 0.7)
+        }, 400)
+    }
+
+    // Callback ref for native camera
+    const handleVideoRef = (element: HTMLVideoElement | null) => {
+        if (element && isStreaming && !needsMjpegStream && !streamRef.current) {
+            videoRef.current = element
+            startNativeCamera(element)
+        } else if (element) {
+            videoRef.current = element
         }
+    }
+
+    // ========== START/STOP ==========
+    const handleStart = () => {
+        setLoading(true)
+        setError('')
+        setIsStreaming(true)
+        if (needsMjpegStream) {
+            startMjpegStream()
+        }
+    }
+
+    const handleStop = () => {
+        setIsStreaming(false)
+        if (streamRef.current) {
+            streamRef.current.getTracks().forEach(track => track.stop())
+            streamRef.current = null
+        }
+        if (processingRef.current) clearInterval(processingRef.current)
+        if (pollingRef.current) clearInterval(pollingRef.current)
+    }
+
+    useEffect(() => {
+        return () => handleStop()
     }, [])
 
     const getDetectedValue = () => {
@@ -179,22 +163,14 @@ const VisionExperience = ({
         return 'None'
     }
 
-    const getStatusColor = () => {
-        if (status.status === 'active') return '#22c55e'
-        return '#6b7280'
-    }
+    const getStatusColor = () => status.status === 'active' ? '#0891b2' : '#94a3b8'
 
     return (
         <div className="vision-experience">
-            {/* Header */}
-            <motion.div
-                className="vision-header"
-                style={{ background: color }}
-                initial={{ opacity: 0, y: -20 }}
-                animate={{ opacity: 1, y: 0 }}
-            >
+            <motion.div className="vision-header" style={{ background: color }}
+                initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }}>
                 <div className="vision-header-content">
-                    <Icon size={32} color="white" />
+                    <Icon size={28} color="white" />
                     <div>
                         <h2>{title}</h2>
                         <p>{description}</p>
@@ -202,88 +178,49 @@ const VisionExperience = ({
                 </div>
             </motion.div>
 
-            {/* Main Content */}
             <div className="vision-content">
                 <AnimatePresence mode="wait">
                     {!isStreaming ? (
-                        <motion.div
-                            key="intro"
-                            className="vision-intro"
-                            initial={{ opacity: 0, scale: 0.95 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            exit={{ opacity: 0, scale: 0.95 }}
-                        >
+                        <motion.div key="intro" className="vision-intro"
+                            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
                             <div className="vision-instructions">
-                                <h3>📝 How it works:</h3>
+                                <h3>How it works:</h3>
                                 <ul>
                                     {instructions.map((instruction, idx) => (
-                                        <motion.li
-                                            key={idx}
+                                        <motion.li key={idx}
                                             initial={{ opacity: 0, x: -20 }}
                                             animate={{ opacity: 1, x: 0 }}
-                                            transition={{ delay: idx * 0.1 }}
-                                        >
+                                            transition={{ delay: idx * 0.1 }}>
                                             {instruction}
                                         </motion.li>
                                     ))}
                                 </ul>
                             </div>
-
-                            <motion.button
-                                onClick={startStream}
-                                disabled={loading}
-                                className="btn-vision-start"
-                                style={{ background: color }}
-                                whileHover={{ scale: 1.05 }}
-                                whileTap={{ scale: 0.95 }}
-                            >
-                                {loading ? (
-                                    <>
-                                        <Loader2 className="animate-spin" size={24} />
-                                        Starting Camera...
-                                    </>
-                                ) : (
-                                    <>
-                                        <Camera size={24} />
-                                        Start Experience
-                                    </>
-                                )}
+                            <motion.button onClick={handleStart} disabled={loading}
+                                className="btn-vision-start" whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+                                <Camera size={20} />
+                                Start Camera
                             </motion.button>
-
                             {error && (
                                 <motion.div className="vision-error" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-                                    <AlertCircle size={20} />
-                                    {error}
+                                    <AlertCircle size={18} /> {error}
                                 </motion.div>
                             )}
                         </motion.div>
                     ) : (
-                        <motion.div
-                            key="stream"
-                            className="vision-stream-layout"
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            exit={{ opacity: 0 }}
-                        >
-                            {/* Status Panel - TOP */}
-                            <motion.div
-                                className="vision-status-panel"
-                                style={{ borderColor: getStatusColor() }}
-                                initial={{ opacity: 0, y: -20 }}
-                                animate={{ opacity: 1, y: 0 }}
-                            >
+                        <motion.div key="stream" className="vision-stream-layout"
+                            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+
+                            {/* Status Panel */}
+                            <div className="vision-status-panel" style={{ borderColor: getStatusColor() }}>
                                 <div className="status-indicator">
-                                    <div
-                                        className="status-dot"
-                                        style={{ background: getStatusColor() }}
-                                    />
+                                    <div className="status-dot" style={{ background: getStatusColor() }} />
                                     <span className="status-label">
                                         {status.status === 'active' ? 'DETECTED' : 'SCANNING'}
                                     </span>
                                 </div>
-
                                 <div className="status-main">
-                                    <Zap size={28} style={{ color: getStatusColor() }} />
+                                    <Zap size={24} style={{ color: getStatusColor() }} />
                                     <div className="status-text">
                                         <span className="detected-value" style={{ color: getStatusColor() }}>
                                             {getDetectedValue()}
@@ -291,33 +228,41 @@ const VisionExperience = ({
                                         <span className="detected-message">{status.message}</span>
                                     </div>
                                 </div>
-                            </motion.div>
+                            </div>
 
                             {/* Video Container */}
                             <div className="vision-video-wrapper">
                                 <div className="vision-video-container">
-                                    {useNativeCamera ? (
-                                        <>
-                                            <video
-                                                ref={videoRef}
-                                                className="vision-video"
-                                                autoPlay
-                                                playsInline
-                                                muted
-                                                style={{ transform: 'scaleX(-1)' }}
-                                            />
-                                            <canvas ref={canvasRef} style={{ display: 'none' }} />
-                                        </>
-                                    ) : (
+                                    {needsMjpegStream ? (
+                                        // MJPEG stream for gesture/pose (has skeleton overlay)
                                         <img
                                             src={`${API_URL}${streamEndpoint}`}
                                             alt="Video Stream"
                                             className="vision-video"
+                                            onLoad={() => setLoading(false)}
                                             onError={() => {
-                                                setError('Failed to connect to camera.')
+                                                setError('Failed to connect to camera stream.')
                                                 setIsStreaming(false)
                                             }}
                                         />
+                                    ) : (
+                                        // Native camera for emotion (no overlay needed)
+                                        <>
+                                            <video
+                                                ref={handleVideoRef}
+                                                className="vision-video"
+                                                autoPlay playsInline muted
+                                                style={{ transform: 'scaleX(-1)' }}
+                                            />
+                                            <canvas ref={canvasRef} style={{ display: 'none' }} />
+                                        </>
+                                    )}
+
+                                    {loading && (
+                                        <div className="vision-loading-overlay">
+                                            <Loader2 className="animate-spin" size={32} />
+                                            <span>Starting camera...</span>
+                                        </div>
                                     )}
 
                                     <div className="vision-live-badge">
@@ -327,17 +272,11 @@ const VisionExperience = ({
                                 </div>
                             </div>
 
-                            {/* Controls - BOTTOM */}
                             <div className="vision-controls">
-                                <motion.button
-                                    onClick={stopStream}
-                                    className="btn-vision-stop"
-                                    whileHover={{ scale: 1.05 }}
-                                    whileTap={{ scale: 0.95 }}
-                                >
-                                    <CameraOff size={20} />
+                                <button onClick={handleStop} className="btn-vision-stop">
+                                    <CameraOff size={18} />
                                     Stop Camera
-                                </motion.button>
+                                </button>
                             </div>
                         </motion.div>
                     )}

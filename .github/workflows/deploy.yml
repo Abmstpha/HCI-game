@@ -1,0 +1,189 @@
+name: Deploy to GCP Cloud Run
+
+on:
+  push:
+    branches:
+      - main
+
+env:
+  GCP_PROJECT_ID: games-483513
+  GCP_REGION: us-central1
+  BACKEND_SERVICE: hci-lab-api
+  FRONTEND_SERVICE: hci-games-lab
+  BACKEND_IMAGE: gcr.io/games-483513/speech-backend
+  FRONTEND_IMAGE: gcr.io/games-483513/speech-frontend
+
+jobs:
+  # ============ TEST JOBS (Run in Parallel) ============
+  test-backend:
+    name: Test Backend
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.9'
+
+      - name: Install dependencies
+        run: |
+          cd backend
+          pip install -r requirements.txt
+
+      - name: Run validation tests
+        run: |
+          python test_gaze_validation.py
+
+      - name: Check Python syntax
+        run: |
+          cd backend
+          python -m py_compile main.py games/*.py
+
+  test-frontend:
+    name: Test Frontend
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: |
+          cd frontend
+          npm ci
+
+      - name: Run TypeScript check
+        run: |
+          cd frontend
+          npx tsc --noEmit
+
+      - name: Run linter
+        run: |
+          cd frontend
+          npm run lint || true
+
+  # ============ BUILD JOBS (Run in Parallel after Tests) ============
+  build-backend:
+    name: Build Backend
+    needs: [test-backend]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Configure Docker for GCR
+        run: gcloud auth configure-docker
+
+      - name: Build and push backend image
+        run: |
+          gcloud builds submit backend \
+            --tag ${{ env.BACKEND_IMAGE }}:latest \
+            --tag ${{ env.BACKEND_IMAGE }}:${{ github.sha }} \
+            --project ${{ env.GCP_PROJECT_ID }} \
+            --timeout=30m
+
+  build-frontend:
+    name: Build Frontend
+    needs: [test-frontend]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Configure Docker for GCR
+        run: gcloud auth configure-docker
+
+      - name: Build and push frontend image
+        run: |
+          gcloud builds submit frontend \
+            --config frontend/cloudbuild.yaml \
+            --substitutions=_VITE_API_URL=https://hci-lab-api-142479529330.us-central1.run.app \
+            --project ${{ env.GCP_PROJECT_ID }}
+
+  # ============ DEPLOY JOB (After All Builds Complete) ============
+  deploy:
+    name: Deploy to Cloud Run
+    needs: [build-backend, build-frontend]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Deploy Backend
+        run: |
+          gcloud run deploy ${{ env.BACKEND_SERVICE }} \
+            --image ${{ env.BACKEND_IMAGE }}:latest \
+            --platform managed \
+            --region ${{ env.GCP_REGION }} \
+            --memory 2Gi \
+            --allow-unauthenticated \
+            --project ${{ env.GCP_PROJECT_ID }}
+
+      - name: Deploy Frontend
+        run: |
+          gcloud run deploy ${{ env.FRONTEND_SERVICE }} \
+            --image ${{ env.FRONTEND_IMAGE }}:latest \
+            --platform managed \
+            --region ${{ env.GCP_REGION }} \
+            --allow-unauthenticated \
+            --project ${{ env.GCP_PROJECT_ID }}
+
+      - name: Get Service URLs
+        id: urls
+        run: |
+          BACKEND_URL=$(gcloud run services describe ${{ env.BACKEND_SERVICE }} \
+            --region ${{ env.GCP_REGION }} \
+            --project ${{ env.GCP_PROJECT_ID }} \
+            --format='value(status.url)')
+          
+          FRONTEND_URL=$(gcloud run services describe ${{ env.FRONTEND_SERVICE }} \
+            --region ${{ env.GCP_REGION }} \
+            --project ${{ env.GCP_PROJECT_ID }} \
+            --format='value(status.url)')
+          
+          echo "Backend: $BACKEND_URL"
+          echo "Frontend: $FRONTEND_URL"
+          echo "backend_url=$BACKEND_URL" >> $GITHUB_OUTPUT
+          echo "frontend_url=$FRONTEND_URL" >> $GITHUB_OUTPUT
+
+      - name: Deployment Summary
+        run: |
+          echo "✅ Deployment Complete!"
+          echo "🔗 Frontend: ${{ steps.urls.outputs.frontend_url }}"
+          echo "🔗 Backend API: ${{ steps.urls.outputs.backend_url }}"

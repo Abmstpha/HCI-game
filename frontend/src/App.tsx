@@ -16,7 +16,7 @@ function App() {
   const experiments = [
     {
       id: 1 as const,
-      title: '⚡ Speech vs Typing',
+      title: 'Speech vs Typing',
       description: 'Race: Voice or Keyboard?',
       icon: Type,
       color: 'linear-gradient(135deg, #06b6d4, #3b82f6)',
@@ -24,7 +24,7 @@ function App() {
     },
     {
       id: 2 as const,
-      title: '🌍 Accent Effect',
+      title: 'Accent Effect',
       description: 'How accents affect AI',
       icon: Globe,
       color: 'linear-gradient(135deg, #a855f7, #ec4899)',
@@ -32,7 +32,7 @@ function App() {
     },
     {
       id: 3 as const,
-      title: '🔊 Background Noise',
+      title: 'Background Noise',
       description: 'Test speech in noisy environments',
       icon: Volume2,
       color: 'linear-gradient(135deg, #22c55e, #10b981)',
@@ -40,7 +40,7 @@ function App() {
     },
     {
       id: 4 as const,
-      title: '🌐 Multilingual',
+      title: 'Multilingual',
       description: 'Speak in 13+ languages',
       icon: Sparkles,
       color: 'linear-gradient(135deg, #f97316, #ef4444)',
@@ -48,7 +48,7 @@ function App() {
     },
     {
       id: 5 as const,
-      title: '✋ Gesture Control',
+      title: 'Gesture Control',
       description: 'Touchless hand interaction',
       icon: Hand,
       color: 'linear-gradient(135deg, #f43f5e, #f0abfc)',
@@ -56,7 +56,7 @@ function App() {
     },
     {
       id: 6 as const,
-      title: '🏃 Pose Tracking',
+      title: 'Pose Tracking',
       description: 'Full-body skeleton overlay',
       icon: Activity,
       color: 'linear-gradient(135deg, #84cc16, #14b8a6)',
@@ -64,7 +64,7 @@ function App() {
     },
     {
       id: 7 as const,
-      title: '😊 Emotion AI',
+      title: 'Emotion AI',
       description: 'Adaptive mood detection',
       icon: Smile,
       color: 'linear-gradient(135deg, #fbbf24, #d97706)',

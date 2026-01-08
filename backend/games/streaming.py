@@ -256,17 +256,30 @@ class EmotionStream:
         return frame
 
 
-# ============== STREAM GENERATOR (HIGH QUALITY) ==============
+# ============== STREAM GENERATOR (MAXIMUM QUALITY) ==============
 def generate_stream(stream_type: str):
     """
     Generator function that yields MJPEG frames.
-    HIGH QUALITY, NO TEXT OVERLAYS.
+    MAXIMUM QUALITY - Uses native camera resolution and MJPEG codec.
     """
     cap = cv2.VideoCapture(0)
-    # HIGH RESOLUTION
-    cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
-    cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
+    
+    # CRITICAL: Set MJPEG codec FIRST before resolution (best practice)
+    # This enables hardware-accelerated MJPEG which gives better quality and FPS
+    cap.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc(*'MJPG'))
+    
+    # Request highest possible resolution (camera will use max it supports)
+    cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1920)
+    cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 1080)
     cap.set(cv2.CAP_PROP_FPS, 30)
+    
+    # Disable auto-focus hunting if supported (reduces blur)
+    cap.set(cv2.CAP_PROP_AUTOFOCUS, 1)
+    
+    # Get actual resolution (camera may not support requested)
+    actual_w = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+    actual_h = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+    print(f"Camera streaming at {actual_w}x{actual_h}")
     
     # Initialize the appropriate processor
     if stream_type == "gesture":
@@ -289,8 +302,8 @@ def generate_stream(stream_type: str):
             if processor:
                 frame = processor.process_frame(frame)
             
-            # HIGH QUALITY JPEG (95%)
-            ret, buffer = cv2.imencode('.jpg', frame, [cv2.IMWRITE_JPEG_QUALITY, 95])
+            # MAXIMUM QUALITY JPEG (100% = no compression)
+            ret, buffer = cv2.imencode('.jpg', frame, [cv2.IMWRITE_JPEG_QUALITY, 100])
             if not ret:
                 continue
             

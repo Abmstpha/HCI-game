@@ -11,17 +11,20 @@ interface Language {
   flag: string
 }
 
+interface TranscriptionResult {
+  transcription: string
+  accuracy: number
+  language: string
+  flag: string
+}
+
 export default function MultilingualTest() {
   const [languages, setLanguages] = useState<Language[]>([])
   const [selectedLang, setSelectedLang] = useState('')
   const [targetPhrase, setTargetPhrase] = useState('')
   const [isRecording, setIsRecording] = useState(false)
   const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(null)
-  const [result, setResult] = useState<any>(null)
-
-  useEffect(() => {
-    fetchLanguages()
-  }, [])
+  const [result, setResult] = useState<TranscriptionResult | null>(null)
 
   const fetchLanguages = async () => {
     try {
@@ -31,6 +34,10 @@ export default function MultilingualTest() {
       console.error('Error fetching languages:', error)
     }
   }
+
+  useEffect(() => {
+    fetchLanguages()
+  }, [])
 
   const startRecording = async () => {
     if (!selectedLang || !targetPhrase) {

@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Play, Loader2, AlertCircle, CheckCircle2 } from 'lucide-react'
+import { Play, Loader2, AlertCircle, CheckCircle2 } from 'lucide-react'\nimport type { LucideIcon } from 'lucide-react'
 import { motion } from 'framer-motion'
 import axios from 'axios'
 
@@ -9,7 +9,7 @@ interface GameLauncherProps {
     title: string
     description: string
     endpoint: string
-    icon: any
+    icon: LucideIcon
     color: string
 }
 
@@ -27,9 +27,10 @@ const GameLauncher = ({ title, description, endpoint, icon: Icon, color }: GameL
             await axios.post(`${API_URL}${endpoint}`)
             setStatus('success')
             setMessage('Game launched successfully! Check your taskbar.')
-        } catch (err: any) {
+        } catch (err) {
             setStatus('error')
-            setMessage(err.response?.data?.detail || 'Failed to connect to backend')
+            const error = err as { response?: { data?: { detail?: string } } }
+            setMessage(error.response?.data?.detail || 'Failed to connect to backend')
             console.error(err)
         } finally {
             setLoading(false)

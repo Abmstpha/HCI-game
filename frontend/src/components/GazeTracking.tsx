@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import { Camera, StopCircle, AlertCircle } from 'lucide-react'
+import type { LucideIcon } from 'lucide-react'
 import { motion } from 'framer-motion'
 import axios from 'axios'
 
@@ -9,7 +10,7 @@ interface GazeTrackingProps {
     title: string
     description: string
     color: string
-    icon: any
+    icon: LucideIcon
 }
 
 const GazeTracking = ({ title, description, color, icon: Icon }: GazeTrackingProps) => {
@@ -22,7 +23,11 @@ const GazeTracking = ({ title, description, color, icon: Icon }: GazeTrackingPro
     const canvasRef = useRef<HTMLCanvasElement>(null)
     const intervalRef = useRef<number | null>(null)
     const frameCountRef = useRef(0)
-    const lastFpsTimeRef = useRef(Date.now())
+    const lastFpsTimeRef = useRef(0)
+
+    useEffect(() => {
+        lastFpsTimeRef.current = Date.now()
+    }, [])
 
     const startCamera = async () => {
         try {

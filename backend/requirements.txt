@@ -102,3 +102,4 @@ soundfile
 zipp==3.23.0
 dlib
 nltk==3.9.1
+nltk==3.9.1

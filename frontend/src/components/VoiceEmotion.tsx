@@ -1,5 +1,6 @@
 import { useState, useRef } from 'react'
 import { Mic, Square, Loader2, AlertCircle, History, Trash2 } from 'lucide-react'
+import type { LucideIcon } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import axios from 'axios'
 
@@ -9,7 +10,25 @@ interface VoiceEmotionProps {
     title: string
     description: string
     color: string
-    icon: any
+    icon: LucideIcon
+}
+
+interface EmotionConfig {
+    emoji: string
+    color: string
+    label: string
+}
+
+interface EmotionResult {
+    emotion: string
+    confidence: number
+    status?: string
+}
+
+interface HistoryItem {
+    emotion: string
+    timestamp: string
+    confidence: number
 }
 
 // Visualizer Bars Component
@@ -26,16 +45,16 @@ const AudioVisualizer = () => {
 const VoiceEmotion = ({ title, description, color, icon: Icon }: VoiceEmotionProps) => {
     const [isRecording, setIsRecording] = useState(false)
     const [isProcessing, setIsProcessing] = useState(false)
-    const [result, setResult] = useState<any>(null)
+    const [result, setResult] = useState<EmotionResult | null>(null)
     const [error, setError] = useState('')
     const [gender, setGender] = useState('all')
-    const [history, setHistory] = useState<any[]>([])
+    const [history, setHistory] = useState<HistoryItem[]>([])
 
     const mediaRecorderRef = useRef<MediaRecorder | null>(null)
     const audioChunksRef = useRef<Blob[]>([])
 
     // Emotion Emojis Map
-    const emotionConfig: any = {
+    const emotionConfig: Record<string, EmotionConfig> = {
         happy: { emoji: '😄', color: '#10b981', label: 'Happy' },
         sad: { emoji: '😢', color: '#3b82f6', label: 'Sad' },
         angry: { emoji: '😡', color: '#ef4444', label: 'Angry' },
@@ -106,7 +125,7 @@ const VoiceEmotion = ({ title, description, color, icon: Icon }: VoiceEmotionPro
                 // Wait, I fixed the model! So this case should be rare.
                 setResult(data)
             }
-        } catch (err: any) {
+        } catch (err) {
             console.error('Analysis error:', err)
             setError('Failed to analyze emotion. Backend might be busy.')
         } finally {

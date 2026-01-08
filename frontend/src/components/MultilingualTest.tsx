@@ -26,16 +26,15 @@ export default function MultilingualTest() {
   const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(null)
   const [result, setResult] = useState<TranscriptionResult | null>(null)
 
-  const fetchLanguages = async () => {
-    try {
-      const response = await axios.get(`${API_URL}/languages`)
-      setLanguages(response.data.languages)
-    } catch (error) {
-      console.error('Error fetching languages:', error)
-    }
-  }
-
   useEffect(() => {
+    const fetchLanguages = async () => {
+      try {
+        const response = await axios.get(`${API_URL}/languages`)
+        setLanguages(response.data.languages)
+      } catch (error) {
+        console.error('Error fetching languages:', error)
+      }
+    }
     fetchLanguages()
   }, [])
 

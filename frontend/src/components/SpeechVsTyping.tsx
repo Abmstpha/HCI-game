@@ -28,7 +28,8 @@ export default function SpeechVsTyping() {
   }
 
   const submitTyping = async () => {
-    const typingTime = (Date.now() - typingStartTime) / 1000
+    const currentTime = Date.now()
+    const typingTime = (currentTime - typingStartTime) / 1000
 
     try {
       const response = await axios.post(`${API_URL}/accuracy`, {

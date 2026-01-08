@@ -6,11 +6,17 @@ import axios from 'axios'
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
 const TARGET_SENTENCE = "The quick brown fox jumps over the lazy dog"
 
+interface AccentTestResult {
+  transcription: string
+  accuracy: number
+  accent: string
+}
+
 export default function AccentTest() {
   const [accentType, setAccentType] = useState('')
   const [isRecording, setIsRecording] = useState(false)
   const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(null)
-  const [result, setResult] = useState<any>(null)
+  const [result, setResult] = useState<AccentTestResult | null>(null)
 
   const accents = [
     'British', 'Australian', 'Indian', 'French', 'Spanish',

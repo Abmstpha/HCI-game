@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { Loader2, AlertCircle, Camera, CameraOff, Zap } from 'lucide-react'
+import type { LucideIcon } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import axios from 'axios'
 
@@ -9,7 +10,7 @@ interface VisionExperienceProps {
     title: string
     description: string
     streamEndpoint: string
-    icon: any
+    icon: LucideIcon
     color: string
     instructions: string[]
     statusKey: 'gesture' | 'pose' | 'emotion'
@@ -107,7 +108,7 @@ const VisionExperience = ({
                 if (response.data) {
                     setStatus(response.data)
                 }
-            } catch (err) {
+            } catch {
                 // Silently handle
             }
         }, 300)
@@ -159,7 +160,7 @@ const VisionExperience = ({
                             setProcessedImage(response.data.image)
                         }
                     }
-                } catch (err) {
+                } catch {
                     // Silently handle
                 }
             }, 'image/jpeg', 0.7)

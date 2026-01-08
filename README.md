@@ -4,12 +4,6 @@ An advanced Human-Computer Interaction (HCI) Laboratory featuring a suite of AI-
 
 **🚀 Live Demo**: [https://hci-games-lab-142479529330.us-central1.run.app](https://hci-games-lab-142479529330.us-central1.run.app)
 
-![FastAPI](https://img.shields.io/badge/FastAPI-009688?style=for-the-badge&logo=FastAPI&logoColor=white)
-![React](https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)
-![MediaPipe](https://img.shields.io/badge/MediaPipe-00A99D?style=for-the-badge&logo=google&logoColor=white)
-![Scikit-Learn](https://img.shields.io/badge/scikit_learn-F7931E?style=for-the-badge&logo=scikit-learn&logoColor=white)
-![Google Cloud](https://img.shields.io/badge/Google_Cloud-4285F4?style=for-the-badge&logo=google-cloud&logoColor=white)
-
 ---
 
 ## 🧠 System Architecture & Technical Details
@@ -165,4 +159,3 @@ npm run dev
 ## 👨‍💻 Developer
 
 Built for **HCI Research** and **Education**.
-**Stack**: React, Vite, FastAPI, Google Speech Recognition.

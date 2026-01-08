@@ -1,4 +1,5 @@
 from fastapi import FastAPI, UploadFile, File, HTTPException, Form
+from fastapi.responses import StreamingResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import speech_recognition as sr
@@ -7,6 +8,24 @@ import time
 import io
 import wave
 from pydub import AudioSegment
+import subprocess
+import os
+import sys
+import threading
+
+# Import streaming module
+import sys
+current_dir = os.path.dirname(os.path.abspath(__file__))
+games_dir = os.path.join(current_dir, 'games')
+if games_dir not in sys.path:
+    sys.path.append(games_dir)
+
+try:
+    from games.streaming import generate_stream
+    STREAMING_AVAILABLE = True
+except ImportError as e:
+    print(f"Streaming module not available: {e}")
+    STREAMING_AVAILABLE = False
 
 app = FastAPI(title="Speech Recognition HCI Lab API")
 
@@ -33,6 +52,11 @@ class TranscriptionResponse(BaseModel):
     latency: float
     success: bool
     error: str = None
+    # Enhanced fields
+    word_count: int = 0
+    words_per_minute: float = 0.0
+    word_accuracy: dict = {}  # {word: matched}
+    feedback: str = ""
 
 class AccuracyRequest(BaseModel):
     original: str
@@ -75,6 +99,53 @@ def calculate_accuracy(original: str, result: str) -> float:
         return 0.0
 
     return difflib.SequenceMatcher(None, original_clean, result_clean).ratio() * 100
+
+def calculate_word_accuracy(original: str, result: str) -> dict:
+    """
+    Calculate word-level accuracy breakdown.
+    Returns dict with each original word and whether it was matched.
+    """
+    def clean_text(text: str) -> list:
+        text = unicodedata.normalize('NFC', text)
+        punctuation = string.punctuation + "।" + "،" + "؟"
+        translator = str.maketrans('', '', punctuation)
+        text = text.translate(translator)
+        return text.lower().split()
+    
+    original_words = clean_text(original)
+    result_words = clean_text(result)
+    
+    word_results = {}
+    for word in original_words:
+        # Check if word exists in result (fuzzy match with 80% threshold)
+        matched = False
+        for r_word in result_words:
+            ratio = difflib.SequenceMatcher(None, word, r_word).ratio()
+            if ratio >= 0.8:
+                matched = True
+                break
+        word_results[word] = matched
+    
+    return word_results
+
+def generate_feedback(accuracy: float, word_accuracy: dict) -> str:
+    """
+    Generate human-readable feedback based on accuracy.
+    """
+    if accuracy >= 95:
+        return "🎉 Excellent! Near-perfect transcription!"
+    elif accuracy >= 85:
+        missed = [w for w, matched in word_accuracy.items() if not matched]
+        if missed:
+            return f"👍 Great job! Minor issues with: '{', '.join(missed[:3])}'"
+        return "👍 Great job! Very accurate."
+    elif accuracy >= 70:
+        missed = [w for w, matched in word_accuracy.items() if not matched]
+        return f"⚠️ Good effort. Missed words: '{', '.join(missed[:5])}'"
+    elif accuracy >= 50:
+        return "🔄 Try speaking more clearly or reducing background noise."
+    else:
+        return "❌ Low accuracy. Check microphone or speak slower."
 
 # Routes
 @app.get("/")
@@ -135,16 +206,27 @@ async def transcribe_audio(
         
         latency = end_time - start_time
         
-        # Calculate accuracy if target sentence provided
+        # Calculate metrics
         accuracy = 0.0
+        word_accuracy = {}
+        feedback = ""
+        word_count = len(transcription.split())
+        words_per_minute = (word_count / latency) * 60 if latency > 0 else 0
+        
         if target_sentence:
             accuracy = calculate_accuracy(target_sentence, transcription)
+            word_accuracy = calculate_word_accuracy(target_sentence, transcription)
+            feedback = generate_feedback(accuracy, word_accuracy)
         
         return TranscriptionResponse(
             transcription=transcription,
             accuracy=accuracy,
             latency=latency,
-            success=True
+            success=True,
+            word_count=word_count,
+            words_per_minute=round(words_per_minute, 1),
+            word_accuracy=word_accuracy,
+            feedback=feedback
         )
         
     except sr.UnknownValueError:
@@ -231,6 +313,123 @@ def get_supported_languages():
             {"code": "hi-IN", "name": "Hindi", "flag": "🇮🇳"}
         ]
     }
+
+@app.post("/games/gesture")
+def launch_gesture_game():
+    """
+    Launch the Gesture Controlled Menu Game in a separate process.
+    """
+    try:
+        # Get absolute path to the game script
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        script_path = os.path.join(current_dir, "games", "gesture_game.py")
+        
+        # Run in a separate thread/process so it doesn't block the API
+        def run_script():
+            subprocess.run([sys.executable, script_path])
+            
+        thread = threading.Thread(target=run_script)
+        thread.start()
+        
+        return {"status": "success", "message": "Gesture Game launched!"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/games/pose")
+def launch_pose_game():
+    """
+    Launch the Pose Estimation Game in a separate process.
+    """
+    try:
+        # Get absolute path to the game script
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        script_path = os.path.join(current_dir, "games", "pose_game.py")
+        
+        # Run in a separate thread/process so it doesn't block the API
+        def run_script():
+            subprocess.run([sys.executable, script_path])
+            
+        thread = threading.Thread(target=run_script)
+        thread.start()
+        
+        return {"status": "success", "message": "Pose Estimation launched!"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/games/emotion")
+def launch_emotion_game():
+    """
+    Launch the Emotion Responsive AI Game in a separate process.
+    """
+    try:
+        # Get absolute path to the game script
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        script_path = os.path.join(current_dir, "games", "emotion_game.py")
+        
+        # Run in a separate thread/process so it doesn't block the API
+        def run_script():
+            subprocess.run([sys.executable, script_path])
+            
+        thread = threading.Thread(target=run_script)
+        thread.start()
+        
+        return {"status": "success", "message": "Emotion Game launched!"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+# ============== STREAMING ENDPOINTS (In-Browser Camera) ==============
+
+@app.get("/stream/gesture")
+def stream_gesture():
+    """
+    Stream hand gesture recognition video feed.
+    Use this in an <img> tag: <img src="http://localhost:8000/stream/gesture" />
+    """
+    if not STREAMING_AVAILABLE:
+        raise HTTPException(status_code=503, detail="Streaming not available")
+    return StreamingResponse(
+        generate_stream("gesture"),
+        media_type="multipart/x-mixed-replace; boundary=frame"
+    )
+
+@app.get("/stream/pose")
+def stream_pose():
+    """
+    Stream pose estimation video feed.
+    """
+    if not STREAMING_AVAILABLE:
+        raise HTTPException(status_code=503, detail="Streaming not available")
+    return StreamingResponse(
+        generate_stream("pose"),
+        media_type="multipart/x-mixed-replace; boundary=frame"
+    )
+
+@app.get("/stream/emotion")
+def stream_emotion():
+    """
+    Stream emotion detection video feed.
+    """
+    if not STREAMING_AVAILABLE:
+        raise HTTPException(status_code=503, detail="Streaming not available")
+    return StreamingResponse(
+        generate_stream("emotion"),
+        media_type="multipart/x-mixed-replace; boundary=frame"
+    )
+
+@app.get("/stream/{stream_type}/status")
+def get_status(stream_type: str):
+    """
+    Get the current detection status for a stream.
+    Frontend polls this to get gesture/pose/emotion info.
+    """
+    if not STREAMING_AVAILABLE:
+        raise HTTPException(status_code=503, detail="Streaming not available")
+    
+    try:
+        from games.streaming import get_stream_status
+        return get_stream_status(stream_type)
+    except ImportError:
+        return {"status": "error", "message": "Streaming module not loaded"}
 
 if __name__ == "__main__":
     import uvicorn

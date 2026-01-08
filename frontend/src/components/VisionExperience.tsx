@@ -20,7 +20,48 @@ interface StreamStatus {
     gesture?: string
     pose?: string
     emotion?: string
+    scores?: Record<string, number> // New field for emotion scores
     message: string
+}
+
+const EmotionScores = ({ scores }: { scores?: Record<string, number> }) => {
+    if (!scores) return null
+
+    // Sort by score descending
+    const sortedScores = Object.entries(scores)
+        .sort(([, a], [, b]) => b - a)
+        .slice(0, 5) // Show top 5
+
+    return (
+        <motion.div
+            className="vision-scores-card"
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+        >
+            <h4>Emotion Confidence</h4>
+            <div className="scores-list">
+                {sortedScores.map(([emotion, score]) => (
+                    <div key={emotion} className="score-item">
+                        <div className="score-header">
+                            <span className="score-label">{emotion}</span>
+                            <span className="score-value">{score.toFixed(1)}%</span>
+                        </div>
+                        <div className="score-bar-bg">
+                            <motion.div
+                                className="score-bar-fill"
+                                initial={{ width: 0 }}
+                                animate={{ width: `${score}%` }}
+                                transition={{ type: "spring", stiffness: 50 }}
+                                style={{
+                                    background: score > 50 ? '#10b981' : '#3b82f6'
+                                }}
+                            />
+                        </div>
+                    </div>
+                ))}
+            </div>
+        </motion.div>
+    )
 }
 
 const VisionExperience = ({
@@ -159,7 +200,12 @@ const VisionExperience = ({
     const getDetectedValue = () => {
         if (statusKey === 'gesture') return status.gesture || 'None'
         if (statusKey === 'pose') return status.pose || 'None'
-        if (statusKey === 'emotion') return status.emotion || 'neutral'
+        if (statusKey === 'emotion') {
+            const emotion = status.emotion || 'neutral'
+            // If we have scores, find the percentage for the dominant emotion
+            const score = status.scores ? status.scores[emotion] : 0
+            return score > 0 ? `${emotion.charAt(0).toUpperCase() + emotion.slice(1)} (${score.toFixed(0)}%)` : emotion
+        }
         return 'None'
     }
 
@@ -255,6 +301,8 @@ const VisionExperience = ({
                                                 style={{ transform: 'scaleX(-1)' }}
                                             />
                                             <canvas ref={canvasRef} style={{ display: 'none' }} />
+                                            {/* Show Confidence Scores for Emotion AI */}
+                                            {statusKey === 'emotion' && <EmotionScores scores={status.scores} />}
                                         </>
                                     )}
 

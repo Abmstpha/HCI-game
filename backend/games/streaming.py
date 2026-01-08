@@ -19,13 +19,11 @@ stream_states = {
 }
 state_lock = threading.Lock()
 
-# Try importing DeepFace
-try:
-    from deepface import DeepFace
-    DEEPFACE_AVAILABLE = True
-except ImportError:
-    DEEPFACE_AVAILABLE = False
-    print("DeepFace not available. Emotion detection will be disabled.")
+# ============== STREAMING CONFIG ==============
+# Uses MediaPipe (Solutions) for all tracking
+# - Hands: GestureStream
+# - Pose: PoseStream (Holistic)
+# - Emotion: ExpressionLab (FaceMesh)
 
 
 # ============== HAND GESTURE STREAM (CLEAN) ==============
@@ -120,162 +118,316 @@ class HandGestureStream:
         return frame
 
 
-# ============== POSE STREAM (DETAILED SKELETON) ==============
+# ============== POSE STREAM (HOLISTIC - BODY + HANDS) ==============
 class PoseStream:
     def __init__(self):
         try:
-            self.mp_pose = mp.solutions.pose
+            self.mp_holistic = mp.solutions.holistic
             self.mp_draw = mp.solutions.drawing_utils
             self.mp_styles = mp.solutions.drawing_styles
         except AttributeError:
             import mediapipe.python.solutions as solutions
             mp.solutions = solutions
-            self.mp_pose = mp.solutions.pose
+            self.mp_holistic = mp.solutions.holistic
             self.mp_draw = mp.solutions.drawing_utils
             self.mp_styles = mp.solutions.drawing_styles
 
-        # Use full body pose with higher model complexity for better tracking
-        self.pose = self.mp_pose.Pose(
+        # Use Holistic model for Body + Hands + Face
+        self.holistic = self.mp_holistic.Holistic(
             min_detection_confidence=0.5,
             min_tracking_confidence=0.5,
-            model_complexity=2,  # Higher complexity = more detailed
-            smooth_landmarks=True,
-            enable_segmentation=False
+            model_complexity=1,
+            smooth_landmarks=True
         )
         
-        # Custom drawing specs for more visible skeleton
-        self.landmark_spec = self.mp_draw.DrawingSpec(
-            color=(0, 255, 0),  # Green landmarks
-            thickness=3,
-            circle_radius=4
-        )
-        self.connection_spec = self.mp_draw.DrawingSpec(
-            color=(255, 0, 255),  # Magenta connections
-            thickness=3,
-            circle_radius=2
-        )
+        # Custom drawing specs for high visibility
+        self.pose_landmark_spec = self.mp_draw.DrawingSpec(color=(0, 255, 0), thickness=2, circle_radius=2)
+        self.pose_connection_spec = self.mp_draw.DrawingSpec(color=(0, 255, 0), thickness=2, circle_radius=2)
+        self.hand_landmark_spec = self.mp_draw.DrawingSpec(color=(255, 0, 255), thickness=2, circle_radius=2)
+        self.hand_connection_spec = self.mp_draw.DrawingSpec(color=(255, 0, 255), thickness=2, circle_radius=2)
 
     def process_frame(self, frame):
         h, w, c = frame.shape
         img_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-        results = self.pose.process(img_rgb)
+        results = self.holistic.process(img_rgb)
         
-        pose = "None"
+        pose_status = "None"
         message = "Step back so I can see you"
         
         if results.pose_landmarks:
-            # Draw full detailed skeleton with custom colors
+            # Draw Pose (Body)
             self.mp_draw.draw_landmarks(
-                frame, 
+                frame,
                 results.pose_landmarks,
-                self.mp_pose.POSE_CONNECTIONS,
-                landmark_drawing_spec=self.landmark_spec,
-                connection_drawing_spec=self.connection_spec
+                self.mp_holistic.POSE_CONNECTIONS,
+                landmark_drawing_spec=self.pose_landmark_spec,
+                connection_drawing_spec=self.pose_connection_spec
             )
             
-            # Also draw additional landmark circles for visibility
+            # Draw Left Hand
+            self.mp_draw.draw_landmarks(
+                frame,
+                results.left_hand_landmarks,
+                self.mp_holistic.HAND_CONNECTIONS,
+                landmark_drawing_spec=self.hand_landmark_spec,
+                connection_drawing_spec=self.hand_connection_spec
+            )
+
+            # Draw Right Hand
+            self.mp_draw.draw_landmarks(
+                frame,
+                results.right_hand_landmarks,
+                self.mp_holistic.HAND_CONNECTIONS,
+                landmark_drawing_spec=self.hand_landmark_spec,
+                connection_drawing_spec=self.hand_connection_spec
+            )
+
+            # Draw Face Mesh (Lightweight)
+            self.mp_draw.draw_landmarks(
+                frame,
+                results.face_landmarks,
+                self.mp_holistic.FACEMESH_TESSELATION,
+                landmark_drawing_spec=None,
+                connection_drawing_spec=self.mp_styles.get_default_face_mesh_tesselation_style()
+            )
+            
+            # Logic for pose detection (same as before)
             landmarks = results.pose_landmarks.landmark
-            for idx, lm in enumerate(landmarks):
-                cx, cy = int(lm.x * w), int(lm.y * h)
-                # Draw larger circles on key joints
-                if idx in [0, 11, 12, 13, 14, 15, 16, 23, 24, 25, 26, 27, 28]:
-                    cv2.circle(frame, (cx, cy), 8, (0, 255, 255), cv2.FILLED)  # Yellow
-                    cv2.circle(frame, (cx, cy), 10, (255, 255, 255), 2)  # White border
+            nose = landmarks[self.mp_holistic.PoseLandmark.NOSE]
+            left_wrist = landmarks[self.mp_holistic.PoseLandmark.LEFT_WRIST]
+            right_wrist = landmarks[self.mp_holistic.PoseLandmark.RIGHT_WRIST]
+            left_shoulder = landmarks[self.mp_holistic.PoseLandmark.LEFT_SHOULDER]
+            right_shoulder = landmarks[self.mp_holistic.PoseLandmark.RIGHT_SHOULDER]
             
-            # Get key points for pose detection
-            nose = landmarks[self.mp_pose.PoseLandmark.NOSE]
-            left_wrist = landmarks[self.mp_pose.PoseLandmark.LEFT_WRIST]
-            right_wrist = landmarks[self.mp_pose.PoseLandmark.RIGHT_WRIST]
-            left_shoulder = landmarks[self.mp_pose.PoseLandmark.LEFT_SHOULDER]
-            right_shoulder = landmarks[self.mp_pose.PoseLandmark.RIGHT_SHOULDER]
-            
-            # Detect poses
             if left_wrist.y < nose.y and right_wrist.y < nose.y:
-                pose = "Hands Up"
+                pose_status = "Hands Up"
                 message = "🙌 Both hands raised!"
             elif (abs(left_wrist.y - left_shoulder.y) < 0.15 and 
                   abs(right_wrist.y - right_shoulder.y) < 0.15):
-                pose = "T-Pose"
+                pose_status = "T-Pose"
                 message = "✈️ T-Pose detected!"
             elif left_wrist.y < left_shoulder.y and right_wrist.y > right_shoulder.y:
-                pose = "Left Raised"
+                pose_status = "Left Raised"
                 message = "👈 Left arm raised"
             elif right_wrist.y < right_shoulder.y and left_wrist.y > left_shoulder.y:
-                pose = "Right Raised"
+                pose_status = "Right Raised"
                 message = "👉 Right arm raised"
             else:
-                pose = "Standing"
+                pose_status = "Standing"
                 message = "🧍 Standing position"
         
         # Update global state
         with state_lock:
             stream_states["pose"] = {
-                "status": "active" if pose != "None" else "waiting",
-                "pose": pose,
+                "status": "active" if pose_status != "None" else "waiting",
+                "pose": pose_status,
                 "message": message
             }
         
         return frame
 
 
-# ============== EMOTION STREAM (CLEAN) ==============
+# ============== EXPRESSION LAB (Advanced MediaPipe Logic) ==============
 class EmotionStream:
     def __init__(self):
+        try:
+            # Import MediaPipe solutions
+            self.mp_face_mesh = mp.solutions.face_mesh
+            self.face_mesh = self.mp_face_mesh.FaceMesh(
+                max_num_faces=1,
+                refine_landmarks=True, # Critical for accurate eyes/lips
+                min_detection_confidence=0.5,
+                min_tracking_confidence=0.5
+            )
+        except Exception as e:
+            print(f"MediaPipe FaceMesh init failed: {e}")
+            self.face_mesh = None
+
         self.emotion = "neutral"
-        self.emotion_history = deque(maxlen=5)
-        self.last_analysis = 0
-        self.analysis_interval = 0.5
+        # Scores initialized to 0
+        self.scores = {
+            "happy": 0.0,
+            "sad": 0.0,
+            "surprise": 0.0,
+            "angry": 0.0,
+            "fear": 0.0,
+            "natural": 0.0
+        }
+        # Smoothing factor (0.0 - 1.0). Lower = smoother but slower.
+        self.alpha = 0.2
+
+    def get_pt(self, landmarks, idx):
+        # Return 3D point (x, y, z)
+        return np.array([landmarks[idx].x, landmarks[idx].y, landmarks[idx].z])
+
+    def dist(self, p1, p2):
+        return np.linalg.norm(p1 - p2)
 
     def process_frame(self, frame):
-        current_time = time.time()
+        if not self.face_mesh:
+            return frame
+
+        h, w, c = frame.shape
+        img_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+        results = self.face_mesh.process(img_rgb)
         
-        emotion = "neutral"
-        message = "😐 Analyzing your expression..."
+        current_scores = {k: 0.0 for k in self.scores}
         
-        # Only analyze periodically
-        if DEEPFACE_AVAILABLE and (current_time - self.last_analysis > self.analysis_interval):
-            try:
-                results = DeepFace.analyze(
-                    img_path=frame,
-                    actions=['emotion'],
-                    enforce_detection=False,
-                    detector_backend='opencv',
-                    silent=True
-                )
-                if results:
-                    detected = results[0]['dominant_emotion']
-                    self.emotion_history.append(detected)
-                    emotion = Counter(self.emotion_history).most_common(1)[0][0]
-                self.last_analysis = current_time
-            except Exception:
-                pass
+        if results.multi_face_landmarks:
+            lm = results.multi_face_landmarks[0].landmark
+            
+            # Helper to get numpy point
+            p = lambda i: np.array([lm[i].x, lm[i].y, lm[i].z]) # 3D
+            # Distance helper (3D)
+            d = lambda i, j: np.linalg.norm(p(i) - p(j))
+
+            # --- DIMENSIONS (Normalization) ---
+            face_width = d(454, 234) # Ear to ear
+            face_height = d(10, 152) # Top to chin
+            
+            # Normalize all ratios by face_width to be scale-invariant
+            norm = face_width
+            
+            # --- FEATURE 1: MOUTH ---
+            mouth_w = d(61, 291)
+            mouth_h = d(13, 14) 
+            mouth_open_ratio = mouth_h / mouth_w if mouth_w > 0 else 0
+            
+            # Smile Curve (2D projection is safer for up/down curve, but we check Width)
+            # Use raw Y for curve because Z affects depth, but Y is "up/down" on screen
+            corners_y = (lm[61].y + lm[291].y) / 2.0
+            center_y = (lm[0].y + lm[17].y) / 2.0
+            smile_curve = (center_y - corners_y) * 100 
+            
+            # Smile Width Ratio (Mouth width / Face width)
+            mouth_width_ratio = mouth_w / norm
+
+            # --- FEATURE 2: BROWS ---
+            # Brow Height (avg distance from eye top to brow)
+            brow_L_h = d(159, 66)
+            brow_R_h = d(386, 296)
+            avg_brow_h = (brow_L_h + brow_R_h) / 2.0
+            brow_lift_ratio = avg_brow_h / norm
+            
+            # Brow Furrow (Distance between inner brows)
+            brow_inner_dist = d(66, 296)
+            brow_furrow_ratio = brow_inner_dist / norm
+
+            # --- FEATURE 3: EYES ---
+            eye_L_h = d(159, 145)
+            eye_R_h = d(386, 374)
+            avg_eye_h = (eye_L_h + eye_R_h) / 2.0
+            eye_open_ratio = avg_eye_h / norm
+
+            # --- LOGIC & SCORING ---
+            
+            # HAPPY
+            # Needs UP curve AND WIDE mouth (prevents head tilt false positives)
+            # Natural mouth width ratio is usually ~0.35. Smile is > 0.40
+            happy_score = 0
+            if smile_curve > 0.5:
+                # Only trust curve if mouth is actually wide
+                if mouth_width_ratio > 0.42: 
+                    happy_score = smile_curve * 50
+                elif mouth_width_ratio > 0.38:
+                    happy_score = smile_curve * 30
+            current_scores["happy"] = min(100, max(0, happy_score)) 
+            
+            # ANGRY
+            # Brows LOW (small lift) OR Brows FURROWED (small inner dist)
+            angry_score = 0
+            # Brow Furrow is very strong indicator for anger
+            if brow_furrow_ratio < 0.16: # Brows touching
+                angry_score += 60
+            elif brow_furrow_ratio < 0.18:
+                angry_score += 30
+                
+            # Squinting eyes + low brows
+            if eye_open_ratio < 0.04 and brow_lift_ratio < 0.15:
+                angry_score += 40
+            
+            current_scores["angry"] = min(100, angry_score)
+
+            # SURPRISE
+            # High brows + Open mouth + Open eyes
+            surprise_score = 0
+            if mouth_open_ratio > 0.3 and eye_open_ratio > 0.06:
+                surprise_score += 50
+            if brow_lift_ratio > 0.25: # High brows
+                surprise_score += 40
+            current_scores["surprise"] = min(100, surprise_score)
+
+            # SAD
+            # Down curve + Brows strictly NOT furrowed (to distinguish from angry)
+            sad_score = 0
+            if smile_curve < -1.0 and brow_furrow_ratio > 0.20:
+                sad_score = abs(smile_curve) * 40
+            current_scores["sad"] = min(100, sad_score)
+            
+            # FEAR
+            # Often confused with surprise: Wide eyes + Open mouth + Brows specific
+            # Fear has brows raised but flatter? Hard to distinguish simply.
+            fear_score = 0
+            if eye_open_ratio > 0.08 and mouth_open_ratio > 0.2:
+                 # Slightly different tuning than surprise
+                 if brow_lift_ratio < 0.25: # Brows NOT super high
+                     fear_score = 40
+            current_scores["fear"] = fear_score
+
+            # NATURAL
+            # High score if everything else is low
+            max_other = max(current_scores.values())
+            # Boost natural if neutral face features are met
+            if mouth_width_ratio < 0.40 and abs(smile_curve) < 1.0 and eye_open_ratio > 0.04:
+                current_scores["natural"] = 100 - (max_other * 0.8)
+            else:
+                current_scores["natural"] = max(0, 100 - max_other)
+
+            # --- TEMPORAL SMOOTHING ---
+            for k in self.scores:
+                # EMA
+                self.scores[k] = (self.alpha * current_scores.get(k, 0)) + ((1 - self.alpha) * self.scores[k])
+
+            # Find dominant
+            self.emotion = max(self.scores, key=self.scores.get)
+            
         else:
-            emotion = self.emotion
-        
-        self.emotion = emotion
-        
-        # Generate message based on emotion
+            # Decay all scores if face lost
+            for k in self.scores:
+                self.scores[k] *= 0.9
+            if max(self.scores.values()) < 10:
+                self.emotion = "neutral"
+
+        # Mapping to friendly UI messages
         emotion_messages = {
-            "happy": "😊 You look happy!",
-            "sad": "😢 Feeling down?",
-            "angry": "😠 Take a deep breath",
-            "surprise": "😲 What surprised you?",
-            "neutral": "😐 Looking calm",
-            "fear": "😨 It's okay, relax",
-            "disgust": "🤢 Something unpleasant?"
+            "happy": "😊 You look radiant!",
+            "sad": "😢 It's okay to be sad.",
+            "surprise": "😲 Did something shock you?",
+            "angry": "😠 Easy there, tiger.",
+            "fear": "😨 You're safe here.",
+            "natural": "✨ Natural & Relaxed",
+            "neutral": "✨ Natural & Relaxed" 
         }
-        message = emotion_messages.get(emotion, "😐 Analyzing...")
         
+        message = emotion_messages.get(self.emotion, "Analyzing...")
+        
+        # Prepare scores for UI (convert to int)
+        ui_scores = {k: float(v) for k, v in self.scores.items() if v > 1.0}
+
         # Update global state
         with state_lock:
             stream_states["emotion"] = {
                 "status": "active",
-                "emotion": emotion,
+                "emotion": self.emotion,
+                "scores": ui_scores,
                 "message": message
             }
         
-        # NO text on video - just return clean frame
         return frame
+
+    def _analysis_complete(self, future):
+        # Deprecated in this version
+        pass
 
 
 # ============== STREAM GENERATOR (MAXIMUM QUALITY) ==============

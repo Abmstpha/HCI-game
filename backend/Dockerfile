@@ -28,6 +28,9 @@ RUN wget -q http://dlib.net/files/shape_predictor_68_face_landmarks.dat.bz2 \
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt pydub python-multipart
 
+# Download nltk data (required for BLEU score)
+RUN python3 -m nltk.downloader punkt
+
 # Copy application code
 COPY . .
 

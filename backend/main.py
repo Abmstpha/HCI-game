@@ -4,6 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import speech_recognition as sr
 import difflib
+from nltk.translate.bleu_score import sentence_bleu, SmoothingFunction
 import time
 import io
 import wave

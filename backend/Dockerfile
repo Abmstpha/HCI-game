@@ -7,6 +7,11 @@ RUN apt-get update && apt-get install -y \
     ffmpeg \
     portaudio19-dev \
     build-essential \
+    libgl1 \
+    libglib2.0-0 \
+    libsm6 \
+    libxext6 \
+    libxrender-dev \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy requirements and install

@@ -28,6 +28,7 @@ export default function SpeechVsTyping() {
   }
 
   const submitTyping = async () => {
+    // eslint-disable-next-line react-hooks/purity
     const currentTime = Date.now()
     const typingTime = (currentTime - typingStartTime) / 1000
 

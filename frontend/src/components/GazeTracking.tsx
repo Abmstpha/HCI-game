@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
-import { Eye, Camera, StopCircle, AlertCircle } from 'lucide-react'
+import { Camera, StopCircle, AlertCircle } from 'lucide-react'
 import { motion } from 'framer-motion'
 import axios from 'axios'
 
@@ -183,19 +183,7 @@ const GazeTracking = ({ title, description, color, icon: Icon }: GazeTrackingPro
                     )}
                 </div>
 
-                <div className="instructions-card">
-                    <h3><Eye size={18} /> How it works</h3>
-                    <p>
-                        This experiment uses <strong>Dlib's 68-point Face Landmark Detector</strong> to find your eyes.
-                        It analyzes the ratio of white sclera on either side of your pupil to estimate if you are looking
-                        <strong> Left</strong>, <strong>Right</strong>, or <strong>Center</strong>.
-                    </p>
-                    <div className="tags">
-                        <span className="tag">Dlib</span>
-                        <span className="tag">OpenCV</span>
-                        <span className="tag">Computer Vision</span>
-                    </div>
-                </div>
+
             </div>
 
             <style>{`

@@ -6,5 +6,6 @@ steps:
       - --cache=true
       - --cache-ttl=720h
 options:
-  machineType: 'E2_HIGHMEM_8'
+  machineType: 'E2_HIGHCPU_32'
+  diskSizeGb: 100
 timeout: 1800s

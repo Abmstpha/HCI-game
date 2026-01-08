@@ -1,14 +1,16 @@
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Mic, Type, Globe, Volume2, Sparkles, Home, Hand, Activity, Smile } from 'lucide-react'
+import { Mic, Type, Globe, Volume2, Sparkles, Home, Hand, Activity, Smile, Podcast, Eye } from 'lucide-react'
 import './App.css'
 import SpeechVsTyping from './components/SpeechVsTyping'
 import AccentTest from './components/AccentTest'
 import NoiseTest from './components/NoiseTest'
 import MultilingualTest from './components/MultilingualTest'
 import VisionExperience from './components/VisionExperience'
+import VoiceEmotion from './components/VoiceEmotion'
+import GazeTracking from './components/GazeTracking'
 
-type ExperimentId = null | 1 | 2 | 3 | 4 | 5 | 6 | 7
+type ExperimentId = null | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9
 
 function App() {
   const [activeExperiment, setActiveExperiment] = useState<ExperimentId>(null)
@@ -69,6 +71,22 @@ function App() {
       icon: Smile,
       color: 'linear-gradient(135deg, #fbbf24, #d97706)',
       bgGlow: 'bg-amber-500/20'
+    },
+    {
+      id: 8 as const,
+      title: 'Voice Emotion',
+      description: 'Detect emotion from tone',
+      icon: Podcast,
+      color: 'linear-gradient(135deg, #6366f1, #8b5cf6)',
+      bgGlow: 'bg-indigo-500/20'
+    },
+    {
+      id: 9 as const,
+      title: 'Gaze Tracking',
+      description: 'Eye tracking with Dlib',
+      icon: Eye,
+      color: 'linear-gradient(135deg, #14b8a6, #06b6d4)',
+      bgGlow: 'bg-teal-500/20'
     }
   ]
 
@@ -134,6 +152,24 @@ function App() {
               "Messages change based on detected mood",
               "Uses temporal smoothing for stable detection"
             ]}
+          />
+        )
+      case 8:
+        return (
+          <VoiceEmotion
+            title="Voice Emotion"
+            description="Speech Emotion Recognition using ML"
+            color="linear-gradient(135deg, #6366f1, #8b5cf6)"
+            icon={Podcast}
+          />
+        )
+      case 9:
+        return (
+          <GazeTracking
+            title="Gaze Tracking"
+            description="Real-time eye tracking using Dlib landmarks"
+            color="linear-gradient(135deg, #14b8a6, #06b6d4)"
+            icon={Eye}
           />
         )
       default:

@@ -78,9 +78,8 @@ const VisionExperience = ({
     const [loading, setLoading] = useState(false)
     const [status, setStatus] = useState<StreamStatus>({ status: 'waiting', message: 'Waiting...' })
 
-    // For gesture/pose: use MJPEG stream (with skeleton overlay)
-    // For emotion: use native camera (no overlay needed)
-    const needsMjpegStream = statusKey === 'gesture' || statusKey === 'pose'
+    // Force Native Camera for ALL modes (Server cannot access camera)
+    const needsMjpegStream = false
 
     // Native camera refs (for emotion)
     const videoRef = useRef<HTMLVideoElement>(null)
@@ -88,6 +87,7 @@ const VisionExperience = ({
     const streamRef = useRef<MediaStream | null>(null)
     const processingRef = useRef<ReturnType<typeof setInterval> | null>(null)
     const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null)
+    const [processedImage, setProcessedImage] = useState<string | null>(null)
 
     // ========== MJPEG STREAM MODE (gesture/pose) ==========
     const startMjpegStream = () => {
@@ -155,6 +155,9 @@ const VisionExperience = ({
                     const response = await axios.post(`${API_URL}/process-frame`, formData, { timeout: 2000 })
                     if (response.data && response.data.status !== 'error') {
                         setStatus(response.data)
+                        if (response.data.image) {
+                            setProcessedImage(response.data.image)
+                        }
                     }
                 } catch (err) {
                     // Silently handle
@@ -292,7 +295,7 @@ const VisionExperience = ({
                                             }}
                                         />
                                     ) : (
-                                        // Native camera for emotion (no overlay needed)
+                                        // Native camera logic
                                         <>
                                             <video
                                                 ref={handleVideoRef}
@@ -300,6 +303,24 @@ const VisionExperience = ({
                                                 autoPlay playsInline muted
                                                 style={{ transform: 'scaleX(-1)' }}
                                             />
+                                            {/* Annotated Overlay (Skeleton) */}
+                                            {processedImage && (
+                                                <img
+                                                    src={processedImage}
+                                                    alt="Overlay"
+                                                    className="vision-video"
+                                                    style={{
+                                                        position: 'absolute',
+                                                        top: 0,
+                                                        left: 0,
+                                                        width: '100%',
+                                                        height: '100%',
+                                                        transform: 'scaleX(-1)', // Match video mirror
+                                                        pointerEvents: 'none'
+                                                    }}
+                                                />
+                                            )}
+
                                             <canvas ref={canvasRef} style={{ display: 'none' }} />
                                             {/* Show Confidence Scores for Emotion AI */}
                                             {statusKey === 'emotion' && <EmotionScores scores={status.scores} />}

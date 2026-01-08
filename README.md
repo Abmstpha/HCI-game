@@ -1,14 +1,14 @@
-# 🎤 Speech Recognition HCI Lab
+# 🎮 HCI Games Lab
 
-An advanced Speech Recognition Laboratory built with FastAPI and React TypeScript, designed for Human-Computer Interaction (HCI) research.
+An advanced Human-Computer Interaction (HCI) Laboratory featuring a suite of AI-powered games and experiments. Built with FastAPI, React, MediaPipe, and Scikit-Learn.
 
-**🚀 Live Demo**: [https://speech-frontend-142479529330.us-central1.run.app](https://speech-frontend-142479529330.us-central1.run.app)
+**🚀 Live Demo**: [https://hci-games-lab-142479529330.us-central1.run.app](https://hci-games-lab-142479529330.us-central1.run.app)
 
-![Speech Recognition Lab](https://img.shields.io/badge/FastAPI-009688?style=for-the-badge&logo=FastAPI&logoColor=white)
+![FastAPI](https://img.shields.io/badge/FastAPI-009688?style=for-the-badge&logo=FastAPI&logoColor=white)
 ![React](https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)
+![MediaPipe](https://img.shields.io/badge/MediaPipe-00A99D?style=for-the-badge&logo=google&logoColor=white)
+![Scikit-Learn](https://img.shields.io/badge/scikit_learn-F7931E?style=for-the-badge&logo=scikit-learn&logoColor=white)
 ![Google Cloud](https://img.shields.io/badge/Google_Cloud-4285F4?style=for-the-badge&logo=google-cloud&logoColor=white)
-![Python](https://img.shields.io/badge/Python-3776AB?style=for-the-badge&logo=python&logoColor=white)
-![FFmpeg](https://img.shields.io/badge/FFmpeg-007808?style=for-the-badge&logo=ffmpeg&logoColor=white)
 
 ---
 
@@ -68,6 +68,36 @@ To objectively measure performance (HCI metric), we calculate the similarity bet
 
 * **Implementation**: Dynamic locale switching. The frontend maps a requested language (e.g., `Japanese`) to its specific BCP-47 language code (`ja-JP`) before sending the request. This ensures the backend invokes the correct language model.
 
+### ✋ 5. Gesture Control (Vision AI)
+
+* **Objective**: Touchless interaction.
+* **Tech**: **MediaPipe Hands**.
+* **Features**: Detects hand landmarks in real-time. Maps index finger position to a virtual cursor. Recognizes "Pinch" gestures for clicking and "Open Palm" for waving.
+
+### 🧘 6. Pose Estimation (Full Body Tracking)
+
+* **Objective**: Kinetic interaction and posture analysis.
+* **Tech**: **MediaPipe Pose**.
+* **Features**: Tracks 33 body landmarks including shoulders, elbows, hips, and knees. Visualizes a skeleton overlay on the video feed. Can detect specific poses like "Hands Up" or "T-Pose".
+
+### 😲 7. Emotion AI (Facial Analysis)
+
+* **Objective**: Adaptive User Interfaces based on mood.
+* **Tech**: **MediaPipe Face Mesh** + **TensorFlow**.
+* **Features**: Analyzes facial expressions to detect core emotions (Happy, Sad, Angry, Surprised, neutral). The UI theme colors dynamically adapt to match the user's detected mood.
+
+### 🎙️ 8. Voice Emotion (Speech Analysis)
+
+* **Objective**: Affective Computing via voice.
+* **Tech**: **Librosa** (Feature Extraction) + **Scikit-Learn** (MLP Classifier).
+* **Features**: Extracts MFCC, Chroma, and Mel-spectrogram features from audio. Classifies the speaker's tone into emotions like Calm, Fearful, or Happy, regardless of the words spoken.
+
+### 👁️ 9. Gaze Tracking (Eye Analysis)
+
+* **Objective**: Attention tracking and interaction.
+* **Tech**: **Dlib** (68-point landmarks) + **OpenCV**.
+* **Features**: Detects pupil position relative to the eye socket to determine gaze direction (Left/Center/Right). Uses robust landmarking trained on thousands of faces.
+
 ---
 
 ## 🛠️ Technology Stack
@@ -82,6 +112,9 @@ To objectively measure performance (HCI metric), we calculate the similarity bet
 ### Backend (Server)
 
 * **FastAPI**: Asynchronous Python web framework. chosen for its speed (Starlette) and automatic validation (Pydantic).
+* **MediaPipe & OpenCV**: For real-time computer vision (Hand, Pose, Face).
+* **Dlib**: For robust facial landmark detection and gaze estimation.
+* **Scikit-Learn & Librosa**: For machine learning and audio feature extraction.
 * **Pydub & FFmpeg**: The backbone of the audio processing pipeline.
 * **Docker**: Multi-stage builds used to package the application, separating the build environment (compilers) from the runtime environment to keep images small (~100MB).
 

@@ -287,6 +287,13 @@ def get_experiments():
                 "description": "Test recognition in different languages",
                 "icon": "🌐",
                 "color": "#ff6600"
+            },
+            {
+                "id": 5,
+                "name": "Voice Emotion AI",
+                "description": "Detect emotions from your speech tone",
+                "icon": "🎙️",
+                "color": "#f43f5e"
             }
         ]
     }
@@ -431,6 +438,64 @@ def get_status(stream_type: str):
     except ImportError:
         return {"status": "error", "message": "Streaming module not loaded"}
 
+# ============== SER ENDPOINTS (Speech Emotion Recognition) ==============
+@app.post("/predict-emotion")
+async def predict_speech_emotion(
+    audio: UploadFile = File(...),
+    gender: str = Form("all") # For future use
+):
+    """
+    Predict emotion from speech audio file.
+    """
+    try:
+        from games.ser_pipeline import ser_engine
+        
+        # Read audio file
+        audio_data = await audio.read()
+        
+        # Predict
+        result = ser_engine.predict(audio_data)
+        
+        return result
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=str(e))
+
+# ============== GAZE TRACKING ENDPOINT ==============
+@app.post("/process-gaze")
+async def process_gaze_frame(image: UploadFile = File(...)):
+    """
+    Process image for Gaze Tracking.
+    Returns: JSON with "status", "direction", and "image" (base64 annotated).
+    """
+    try:
+        from games.gaze_tracker import gaze_tracker
+        
+        contents = await image.read()
+        nparr = np.frombuffer(contents, np.uint8)
+        img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+
+        if img is None:
+            return {"status": "error", "message": "Invalid image"}
+
+        # Process
+        annotated_frame, direction = gaze_tracker.process_frame(img)
+        
+        # Encode result
+        _, buffer = cv2.imencode('.jpg', annotated_frame)
+        base64_image = base64.b64encode(buffer).decode('utf-8')
+        
+        return {
+            "status": "success",
+            "direction": direction,
+            "image": f"data:image/jpeg;base64,{base64_image}"
+        }
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return {"status": "error", "message": str(e)}
+
 # Frame processors for native camera approach
 frame_processors = {}
 
@@ -469,15 +534,31 @@ async def process_frame(
             elif type == "emotion":
                 frame_processors[type] = EmotionStream()
         
+    
+        processed_frame = None
         processor = frame_processors.get(type)
         if processor:
-            # Process frame (updates global state)
-            processor.process_frame(img)
+            # Process frame (updates global state) AND returns annotated frame
+            processed_frame = processor.process_frame(img)
         
-        # Return the current status
-        return get_stream_status(type)
+        # Get status
+        response_data = get_stream_status(type)
+        
+        # Encode processed frame to base64 if available
+        if processed_frame is not None:
+            import base64
+            # Encode to jpg
+            ret, buffer = cv2.imencode('.jpg', processed_frame)
+            if ret:
+                jpg_as_text = base64.b64encode(buffer).decode('utf-8')
+                response_data["image"] = f"data:image/jpeg;base64,{jpg_as_text}"
+        
+        return response_data
         
     except Exception as e:
+        import traceback
+        traceback.print_exc()
+        print(f"FRAME PROCESS ERROR: {str(e)}")
         return {"status": "error", "message": str(e)}
 
 if __name__ == "__main__":

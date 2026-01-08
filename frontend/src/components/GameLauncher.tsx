@@ -1,5 +1,6 @@
 import { useState } from 'react'
-import { Play, Loader2, AlertCircle, CheckCircle2 } from 'lucide-react'\nimport type { LucideIcon } from 'lucide-react'
+import { Play, Loader2, AlertCircle, CheckCircle2 } from 'lucide-react'
+import type { LucideIcon } from 'lucide-react'
 import { motion } from 'framer-motion'
 import axios from 'axios'
 

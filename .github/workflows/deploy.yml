@@ -63,11 +63,6 @@ jobs:
           cd frontend
           npx tsc --noEmit
 
-      - name: Run linter
-        run: |
-          cd frontend
-          npm run lint || true
-
   # ============ BUILD JOBS (Run in Parallel after Tests) ============
   build-backend:
     name: Build Backend

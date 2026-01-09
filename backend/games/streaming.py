@@ -10,6 +10,13 @@ import numpy as np
 from collections import deque, Counter
 import threading
 import json
+try:
+    from .utils import OneEuroFilter
+except ImportError:
+    try:
+        from games.utils import OneEuroFilter
+    except ImportError:
+        from utils import OneEuroFilter
 
 # Global state for each stream type
 stream_states = {
@@ -38,14 +45,21 @@ class HandGestureStream:
             mp.solutions = solutions
             self.mp_hands = mp.solutions.hands
             self.mp_draw = mp.solutions.drawing_utils
-            self.mp_styles = mp.solutions.drawing_styles
+            self.mp_styles = mp.styles
 
         self.hands = self.mp_hands.Hands(
-            max_num_hands=1,
-            min_detection_confidence=0.7,
-            min_tracking_confidence=0.5,
+            max_num_hands=2, # Support both hands
+            min_detection_confidence=0.7, 
+            min_tracking_confidence=0.6,
             model_complexity=1
         )
+        # Tracking for Swipe detection per hand
+        self.histories = {} # Dict: hand_label -> deque
+        self.filters_x = {} # Dict: hand_label -> OneEuroFilter
+        self.filters_y = {} # Dict: hand_label -> OneEuroFilter
+        
+        self.last_swipe_time = 0
+        self.swipe_cooldown = 1.0 # 1 second cooldown across all hands
 
     def process_frame(self, frame):
         h, w, c = frame.shape
@@ -55,9 +69,15 @@ class HandGestureStream:
         gesture = "None"
         message = "Show your hand to the camera"
         
-        if results.multi_hand_landmarks:
-            for hand_lms in results.multi_hand_landmarks:
-                # Draw hand landmarks with nice styling (no text!)
+        current_time = time.time()
+        detected_gestures = []
+
+        if results.multi_hand_landmarks and results.multi_handedness:
+            for idx, hand_lms in enumerate(results.multi_hand_landmarks):
+                # Identify hand (Left/Right)
+                hand_label = results.multi_handedness[idx].classification[0].label # 'Left' or 'Right'
+                
+                # Draw hand landmarks
                 self.mp_draw.draw_landmarks(
                     frame, 
                     hand_lms, 
@@ -66,46 +86,86 @@ class HandGestureStream:
                     self.mp_styles.get_default_hand_connections_style()
                 )
                 
-                # Detect gesture
-                idx_x = int(hand_lms.landmark[8].x * w)
-                idx_y = int(hand_lms.landmark[8].y * h)
+                # Finger tracking
+                raw_idx_x = int(hand_lms.landmark[8].x * w)
+                raw_idx_y = int(hand_lms.landmark[8].y * h)
+                
+                # Initialize filters/history for this hand if not exists
+                if hand_label not in self.filters_x:
+                    self.filters_x[hand_label] = OneEuroFilter(current_time, raw_idx_x, min_cutoff=1.0, beta=0.01)
+                    self.filters_y[hand_label] = OneEuroFilter(current_time, raw_idx_y, min_cutoff=1.0, beta=0.01)
+                    self.histories[hand_label] = deque(maxlen=8) # Slightly shorter history for snappier response
+
+                # Apply smoothing filters
+                idx_x = int(self.filters_x[hand_label].filter(current_time, raw_idx_x))
+                idx_y = int(self.filters_y[hand_label].filter(current_time, raw_idx_y))
+
                 thumb_x = int(hand_lms.landmark[4].x * w)
                 thumb_y = int(hand_lms.landmark[4].y * h)
                 dist = math.hypot(idx_x - thumb_x, idx_y - thumb_y)
                 
-                # Draw cursor circle
+                # Update history for this hand
+                self.histories[hand_label].append(idx_x)
+                
+                # Swipe Logic for this hand
+                history = self.histories[hand_label]
+                if len(history) == history.maxlen and (current_time - self.last_swipe_time > self.swipe_cooldown):
+                    diff = history[-1] - history[0]
+                    
+                    # Directional Consistency
+                    is_monotonic = True
+                    noise_margin = w * 0.03
+                    for i in range(1, len(history)):
+                        if diff > 0 and history[i] < history[i-1] - noise_margin:
+                            is_monotonic = False
+                            break
+                        if diff < 0 and history[i] > history[i-1] + noise_margin:
+                            is_monotonic = False
+                            break
+                    
+                    # Deliberate movement threshold
+                    threshold = w * 0.25 # Lower threshold (was 0.35) for better sensitivity
+                    
+                    if abs(diff) > threshold and is_monotonic:
+                        # Toward User's Left (Screen Right) = diff > 0 = Next Slide
+                        # Toward User's Right (Screen Left) = diff < 0 = Prev Slide
+                        hand_gesture = "Swipe_Left" if diff > 0 else "Swipe_Right"
+                        detected_gestures.append((hand_gesture, abs(diff)))
+                        print(f"✅ {hand_label} SLAP: diff={diff}, gesture={hand_gesture}")
+
+                # Draw feedback (Pinch Click)
                 if dist < 40:
                     cv2.circle(frame, (idx_x, idx_y), 20, (0, 255, 0), cv2.FILLED)
-                    cv2.circle(frame, (idx_x, idx_y), 25, (255, 255, 255), 3)
-                    gesture = "Pinch Click"
-                    message = "✅ Click detected!"
+                    if gesture == "None": gesture = "Pinch Click"
                 else:
-                    cv2.circle(frame, (idx_x, idx_y), 15, (255, 0, 255), cv2.FILLED)
-                    cv2.circle(frame, (idx_x, idx_y), 18, (255, 255, 255), 2)
-                    
-                    # Count fingers
-                    fingers_up = 0
-                    tip_ids = [4, 8, 12, 16, 20]
-                    pip_ids = [2, 6, 10, 14, 18]
-                    for tip, pip in zip(tip_ids, pip_ids):
-                        if hand_lms.landmark[tip].y < hand_lms.landmark[pip].y:
-                            fingers_up += 1
-                    
-                    if fingers_up >= 4:
-                        gesture = "Open Hand"
-                        message = "👋 Wave gesture detected"
-                    elif fingers_up == 0:
-                        gesture = "Fist"
-                        message = "✊ Fist gesture detected"
-                    elif fingers_up == 1:
-                        gesture = "Pointing"
-                        message = "👆 Pointing gesture"
-                    elif fingers_up == 2:
-                        gesture = "Peace"
-                        message = "✌️ Peace sign detected"
-                    else:
-                        gesture = f"{fingers_up} Fingers"
-                        message = f"Showing {fingers_up} fingers"
+                    color = (255, 0, 255) if hand_label == "Right" else (0, 255, 255)
+                    cv2.circle(frame, (idx_x, idx_y), 15, color, cv2.FILLED)
+
+        # Process detected gestures
+        if detected_gestures:
+            # Sort by movement intensity and take the strongest
+            detected_gestures.sort(key=lambda x: x[1], reverse=True)
+            gesture = detected_gestures[0][0]
+            
+            if gesture == "Swipe_Left":
+                message = "➡️ Next Slide"
+            elif gesture == "Swipe_Right":
+                message = "⬅️ Prev Slide"
+            
+            self.last_swipe_time = current_time
+            # Clear all histories to prevent double-fire
+            for h_label in self.histories:
+                self.histories[h_label].clear()
+
+        # Update global state
+        with state_lock:
+            stream_states["gesture"] = {
+                "status": "active" if gesture != "None" else "waiting",
+                "gesture": gesture,
+                "message": message
+            }
+        
+        return frame        # Persistent history through brief occlusion
         
         # Update global state
         with state_lock:

@@ -1,7 +1,10 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { X, ChevronLeft, ChevronRight, Monitor, Server, Brain, Shield, AlertTriangle, Lightbulb } from 'lucide-react'
+import { X, ChevronLeft, ChevronRight, Monitor, Server, Brain, Shield, AlertTriangle, Lightbulb, Hand, MoveLeft, MoveRight, Loader2 } from 'lucide-react'
+import axios from 'axios'
 import './PresentationSlides.css'
+
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
 
 interface Slide {
     id: number
@@ -419,14 +422,23 @@ interface PresentationSlidesProps {
 
 export default function PresentationSlides({ onClose }: PresentationSlidesProps) {
     const [currentSlide, setCurrentSlide] = useState(0)
+    const [isGestureActive, setIsGestureActive] = useState(false)
+    const [gestureFeedback, setGestureFeedback] = useState<string | null>(null)
+    const [cameraAccessible, setCameraAccessible] = useState(true)
+    const [processedImage, setProcessedImage] = useState<string | null>(null)
+
+    const videoRef = useRef<HTMLVideoElement>(null)
+    const canvasRef = useRef<HTMLCanvasElement>(null)
+    const streamRef = useRef<MediaStream | null>(null)
+    const processingRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
     // Keyboard navigation
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
             if (e.key === 'ArrowRight' || e.key === 'Space') {
-                setCurrentSlide(prev => Math.min(prev + 1, slides.length - 1))
+                nextSlide()
             } else if (e.key === 'ArrowLeft') {
-                setCurrentSlide(prev => Math.max(prev - 1, 0))
+                prevSlide()
             } else if (e.key === 'Escape') {
                 onClose()
             }
@@ -435,14 +447,154 @@ export default function PresentationSlides({ onClose }: PresentationSlidesProps)
         return () => window.removeEventListener('keydown', handleKeyDown)
     }, [onClose])
 
+    const nextSlide = () => setCurrentSlide(prev => Math.min(prev + 1, slides.length - 1))
+    const prevSlide = () => setCurrentSlide(prev => Math.max(prev - 1, 0))
+
+    // Gesture Detection Setup
+    useEffect(() => {
+        let isCancelled = false
+
+        const initGestureDetection = async () => {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({
+                    video: { width: 640, height: 480, facingMode: 'user' }
+                })
+                if (isCancelled) {
+                    stream.getTracks().forEach(t => t.stop())
+                    return
+                }
+                streamRef.current = stream
+                if (videoRef.current) {
+                    videoRef.current.srcObject = stream
+                    await videoRef.current.play()
+                }
+                setIsGestureActive(true)
+                startProcessing()
+            } catch (err) {
+                console.error('Gesture camera error:', err)
+                setCameraAccessible(false)
+            }
+        }
+
+        const startProcessing = () => {
+            processingRef.current = setInterval(async () => {
+                if (!videoRef.current || !canvasRef.current) return
+
+                const video = videoRef.current
+                const canvas = canvasRef.current
+                const ctx = canvas.getContext('2d')
+                if (!ctx || video.videoWidth === 0) return
+
+                canvas.width = 320 // Higher resolution for precision
+                canvas.height = 240
+                ctx.drawImage(video, 0, 0, canvas.width, canvas.height)
+
+                canvas.toBlob(async (blob) => {
+                    if (!blob || isCancelled) return
+                    try {
+                        const formData = new FormData()
+                        formData.append('frame', blob, 'frame.jpg')
+                        formData.append('type', 'gesture')
+                        const response = await axios.post(`${API_URL}/process-frame`, formData)
+
+                        if (response.data && response.data.gesture) {
+                            const g = response.data.gesture
+                            if (g !== 'None') {
+                                console.log('DEBUG GESTURE DETECTED:', g)
+                            }
+
+                            if (response.data.image) {
+                                setProcessedImage(response.data.image)
+                            }
+                            if (g === 'Swipe_Left') {
+                                nextSlide()
+                                triggerFeedback('Next Slide ➡️')
+                            } else if (g === 'Swipe_Right') {
+                                prevSlide()
+                                triggerFeedback('⬅️ Prev Slide')
+                            }
+                        }
+                    } catch (err) {
+                        // Silently fail polling
+                    }
+                }, 'image/jpeg', 0.5)
+            }, 100)
+        }
+
+        const triggerFeedback = (msg: string) => {
+            setGestureFeedback(msg)
+            setTimeout(() => setGestureFeedback(null), 1000)
+        }
+
+        initGestureDetection()
+
+        return () => {
+            isCancelled = true
+            if (processingRef.current) clearInterval(processingRef.current)
+            if (streamRef.current) streamRef.current.getTracks().forEach(t => t.stop())
+        }
+    }, [])
+
     const slide = slides[currentSlide]
 
     return (
         <div className="presentation-overlay">
 
+            {/* Hidden capture elements */}
+            <video ref={videoRef} style={{ display: 'none' }} playsInline muted />
+            <canvas ref={canvasRef} style={{ display: 'none' }} />
+
+            {/* Gesture Hud */}
+            <div className={`gesture-hud ${!cameraAccessible ? 'error' : ''}`}>
+                {cameraAccessible ? (
+                    <>
+                        <Hand size={16} className={isGestureActive ? 'active' : ''} />
+                        <span>Gesture Control Active</span>
+                    </>
+                ) : (
+                    <span>Camera Permission Needed for Gestures</span>
+                )}
+            </div>
+
+            {/* Camera Preview */}
+            <AnimatePresence>
+                {cameraAccessible && isGestureActive && (
+                    <motion.div
+                        initial={{ opacity: 0, x: 20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        className="camera-preview-box"
+                    >
+                        {processedImage ? (
+                            <img src={processedImage} alt="Gesture Feed" />
+                        ) : (
+                            <div className="preview-loading">
+                                <Loader2 className="animate-spin" size={20} />
+                                <span>Starting Feed...</span>
+                            </div>
+                        )}
+                        <div className="preview-label">Live Gesture Feed</div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
+            {/* Gesture Feedback Toast */}
+            <AnimatePresence>
+                {gestureFeedback && (
+                    <motion.div
+                        initial={{ opacity: 0, y: 20, scale: 0.8 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0.8 }}
+                        className="gesture-toast"
+                    >
+                        {gestureFeedback.includes('Next') ? <MoveRight size={24} /> : <MoveLeft size={24} />}
+                        {gestureFeedback}
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
             {/* Header controls */}
             <div className="presentation-controls">
-                <span className="keyboard-hint">Use ← → arrow keys</span>
+                <span className="keyboard-hint">Use ← → arrow keys or Gesture Slaps</span>
                 <button
                     onClick={onClose}
                     className="close-button"

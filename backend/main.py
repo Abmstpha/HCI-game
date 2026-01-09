@@ -591,6 +591,45 @@ async def process_frame(
         print(f"FRAME PROCESS ERROR: {str(e)}")
         return {"status": "error", "message": str(e)}
 
+# ============== FACE FILTER ENDPOINT (Snapchat-style) ==============
+@app.post("/apply-filter")
+async def apply_face_filter(
+    image: UploadFile = File(...),
+    filter: str = Form("sunglasses")
+):
+    """
+    Apply a Snapchat-style filter to a face in the image.
+    Available filters: sunglasses, hat, cigar, beard, mustache, bald, clown, dog, none
+    """
+    try:
+        from games.face_filter import face_filter_processor
+        
+        # Read the image
+        contents = await image.read()
+        nparr = np.frombuffer(contents, np.uint8)
+        img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+
+        if img is None:
+            return {"status": "error", "message": "Invalid image"}
+
+        # Process and apply filter
+        processed_frame, face_detected = face_filter_processor.process_frame(img, filter)
+        
+        # Encode result
+        _, buffer = cv2.imencode('.jpg', processed_frame)
+        base64_image = base64.b64encode(buffer).decode('utf-8')
+        
+        return {
+            "status": "success",
+            "face_detected": face_detected,
+            "filter": filter,
+            "image": f"data:image/jpeg;base64,{base64_image}"
+        }
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return {"status": "error", "message": str(e)}
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8000)

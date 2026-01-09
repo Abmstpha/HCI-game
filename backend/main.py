@@ -16,6 +16,11 @@ import threading
 import numpy as np
 import cv2
 import base64
+import logging
+
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 # Import streaming module
 import sys

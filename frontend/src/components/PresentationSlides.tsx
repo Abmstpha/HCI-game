@@ -13,37 +13,35 @@ interface Slide {
 const slides: Slide[] = [
     {
         id: 1,
-        title: "HCI Games Lab",
-        subtitle: "Bridging the Gap Between Theory and Reality in AI",
+        title: "The Learning Gap (For Students)",
+        subtitle: "Why we built this platform",
         content: (
             <div className="slide-content-inner">
-                <div style={{ marginBottom: '2rem', textAlign: 'center' }}>
-                    <p style={{ fontSize: '1.25rem', color: '#4b5563', maxWidth: '800px', margin: '0 auto' }}>
-                        Welcome to a hands-on educational platform designed to demonstrate the <strong>capabilities</strong>, <strong>limitations</strong>, and <strong>biases</strong> of modern Human-Computer Interaction systems.
+                <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
+                    <p style={{ fontSize: '1.4rem', color: '#334155', maxWidth: '800px', margin: '0 auto', lineHeight: '1.6' }}>
+                        Students learn "Clean AI" in textbooks: <br />
+                        <span style={{ color: '#64748b', fontSize: '1.1rem' }}>Perfect datasets. Clear inputs. Deterministic outputs.</span>
+                    </p>
+                    <p style={{ fontSize: '1.4rem', color: '#dc2626', fontWeight: 'bold', marginTop: '1.5rem' }}>
+                        Real AI is messy.
                     </p>
                 </div>
                 <div className="slide-grid-2">
-                    <div className="feature-box">
-                        <h3 className="slide-subtitle" style={{ marginBottom: '1rem', color: '#0891b2', display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: 600 }}>
-                            <Brain size={24} /> The Concept
-                        </h3>
-                        <p style={{ marginBottom: '1rem', lineHeight: '1.6' }}>
-                            Students often learn AI concepts in a vacuum. This platform forces them to interact with real models (Speech, Vision, Emotion) in real-time, revealing how these systems <em>actually</em> behave in the wild.
-                        </p>
+                    <div className="feature-box" style={{ background: '#f8fafc' }}>
+                        <h3 className="slide-subtitle" style={{ color: '#475569' }}>📚 The Textbook</h3>
                         <ul className="feature-list">
-                            <li>🎯 <strong>10 Experiments</strong> covering Voice & Vision</li>
-                            <li>⚡ <strong>Real-time Feedback</strong> on latency & accuracy</li>
-                            <li>🔍 <strong>Transparency</strong> into the "Black Box" of AI</li>
+                            <li>✅ "Accuracy is 99%"</li>
+                            <li>✅ "Latencies are negligible"</li>
+                            <li>✅ "Bias is an edge case"</li>
                         </ul>
                     </div>
-                    <div className="feature-box" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: '#f0f9ff', border: '1px solid #bae6fd' }}>
-                        <h3 className="slide-subtitle" style={{ marginBottom: '1rem', fontSize: '1.2rem', color: '#0369a1' }}>Live Demo Available</h3>
-                        <div style={{ background: 'white', padding: '1rem', borderRadius: '8px', border: '1px solid #e0f2fe', width: '100%', textAlign: 'center' }}>
-                            <a href="https://hci-games-lab-142479529330.us-central1.run.app" target="_blank" rel="noreferrer" style={{ color: '#0284c7', textDecoration: 'none', fontWeight: 'bold', fontSize: '1.1rem' }}>
-                                hci-games-lab...run.app ↗
-                            </a>
-                        </div>
-                        <p style={{ fontSize: '0.9rem', color: '#64748b', marginTop: '1rem' }}>No installation required • Works in Browser</p>
+                    <div className="feature-box" style={{ background: '#fef2f2', borderColor: '#fca5a5' }}>
+                        <h3 className="slide-subtitle" style={{ color: '#dc2626' }}>🌍 The Reality</h3>
+                        <ul className="feature-list">
+                            <li>❌ Accuracy drops 20% with accents</li>
+                            <li>❌ Cold starts take 5+ seconds</li>
+                            <li>❌ Bias is systemic</li>
+                        </ul>
                     </div>
                 </div>
             </div>
@@ -51,11 +49,39 @@ const slides: Slide[] = [
     },
     {
         id: 2,
-        title: "The Challenge: Why This Exists",
+        title: "A Visual Teaching Tool (For Professors)",
+        subtitle: "Don't just describe the Black Box. Open it.",
+        content: (
+            <div className="slide-grid-2">
+                <div className="feature-box" style={{ borderColor: '#3b82f6', background: '#eff6ff' }}>
+                    <h3 className="slide-subtitle" style={{ color: '#2563eb' }}>🎓 Pedagogical Value</h3>
+                    <p style={{ lineHeight: '1.6', color: '#1e3a8a' }}>
+                        This platform serves as a <strong>live laboratory</strong>. Instead of explaining "confidence thresholds" abstractly, you can show a student:
+                    </p>
+                    <div style={{ background: 'white', padding: '1rem', borderRadius: '8px', marginTop: '1rem', color: '#4b5563', fontStyle: 'italic', borderLeft: '4px solid #3b82f6' }}>
+                        "Speak normally, then whisper. Watch the confidence score drop in real-time."
+                    </div>
+                </div>
+                <div className="feature-box">
+                    <h3 className="slide-subtitle" style={{ color: '#0f172a' }}>Key Concepts Visualized</h3>
+                    <ul className="feature-list">
+                        <li>🎯 <strong>Landmarks</strong>: See the 468 points tracking your face.</li>
+                        <li>⚡ <strong>Latency</strong>: Feel the delay of serverless architecture.</li>
+                        <li>📉 <strong>Drift</strong>: Watch models fail as lighting changes.</li>
+                        <li>🤝 <strong>Multimodality</strong>: Compare Voice vs. Gesture inputs.</li>
+                    </ul>
+                </div>
+            </div>
+        )
+    },
+    {
+        id: 3,
+        title: "The Core Challenge",
+        subtitle: "Bridging the Gap",
         content: (
             <div className="slide-grid-2" style={{ height: '100%' }}>
                 <div className="feature-box" style={{ borderColor: '#fca5a5', background: '#fef2f2' }}>
-                    <h3 style={{ color: '#dc2626', fontSize: '1.5rem', fontWeight: 'bold', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <h3 style={{ color: '#dc2626', fontSize: '1.3rem', fontWeight: 'bold', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                         <AlertTriangle size={24} /> The Problem
                     </h3>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
@@ -70,7 +96,7 @@ const slides: Slide[] = [
                     </div>
                 </div>
                 <div className="feature-box" style={{ borderColor: '#86efac', background: '#f0fdf4' }}>
-                    <h3 style={{ color: '#16a34a', fontSize: '1.5rem', fontWeight: 'bold', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <h3 style={{ color: '#16a34a', fontSize: '1.3rem', fontWeight: 'bold', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                         <Lightbulb size={24} /> Our Solution
                     </h3>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
@@ -88,8 +114,9 @@ const slides: Slide[] = [
         )
     },
     {
-        id: 3,
-        title: "Platform Overview (10 Experiments)",
+        id: 4,
+        title: "The Solution Overview",
+        subtitle: "10 Interactive Modules",
         content: (
             <div className="table-container">
                 <table className="slide-table">
@@ -97,88 +124,73 @@ const slides: Slide[] = [
                         <tr>
                             <th>#</th>
                             <th>Experiment</th>
-                            <th>Core Technology</th>
+                            <th>Core Concept</th>
                             <th>Educational Goal</th>
                         </tr>
                     </thead>
                     <tbody>
-                        <tr><td>1</td><td><strong>Speech vs Typing</strong></td><td>Google Speech API</td><td>Understand input efficiency & trade-offs</td></tr>
-                        <tr><td>2</td><td><strong>Accent Effect</strong></td><td>Speech Recognition</td><td>Whose voice is "standard"? Bias audit</td></tr>
-                        <tr><td>3</td><td><strong>Background Noise</strong></td><td>Audio Processing</td><td>Impact of environmental constraints</td></tr>
-                        <tr><td>4</td><td><strong>Multilingual</strong></td><td>Multi-language API</td><td>Global accessibility challenges</td></tr>
-                        <tr><td>5</td><td><strong>Gesture Control</strong></td><td>MediaPipe Hands</td><td>Designing touchless interfaces</td></tr>
-                        <tr><td>6</td><td><strong>Pose Tracking</strong></td><td>MediaPipe Pose</td><td>Full-body interaction limits</td></tr>
-                        <tr><td>7</td><td><strong>Facial Emotion</strong></td><td>Face Mesh + TF</td><td>Affective computing & ambiguity</td></tr>
-                        <tr><td>8</td><td><strong>Voice Emotion</strong></td><td>Librosa + Scikit</td><td>Tone analysis beyond words</td></tr>
-                        <tr><td>9</td><td><strong>Gaze Tracking</strong></td><td>Dlib + OpenCV</td><td>Attention as an input stream</td></tr>
-                        <tr><td>10</td><td><strong>Face Filters</strong></td><td>TensorFlow + Canvas</td><td>Augmented Reality fundamentals</td></tr>
+                        <tr><td>1</td><td><strong>Speech vs Typing</strong></td><td>Input Efficiency</td><td>Compare modality speeds</td></tr>
+                        <tr><td>2</td><td><strong>Accent Effect</strong></td><td>Algo Bias</td><td>Audit recognition gaps</td></tr>
+                        <tr><td>3</td><td><strong>Background Noise</strong></td><td>Robustness</td><td>Test environmental limits</td></tr>
+                        <tr><td>4</td><td><strong>Multilingual</strong></td><td>Globalization</td><td>Accessibility challenges</td></tr>
+                        <tr><td>5</td><td><strong>Gesture Control</strong></td><td>Computer Vision</td><td>Touchless interface design</td></tr>
+                        <tr><td>6</td><td><strong>Pose Tracking</strong></td><td>Full Body HCI</td><td>Physical interaction</td></tr>
+                        <tr><td>7</td><td><strong>Facial Emotion</strong></td><td>Affective Comp.</td><td>Emotional ambiguity</td></tr>
+                        <tr><td>8</td><td><strong>Voice Emotion</strong></td><td>Prosody Analysis</td><td>Tone vs Words</td></tr>
+                        <tr><td>9</td><td><strong>Gaze Tracking</strong></td><td>Attention API</td><td>Subconscious input</td></tr>
+                        <tr><td>10</td><td><strong>Face Filters</strong></td><td>Augmented Reality</td><td>Landmark mapping</td></tr>
                     </tbody>
                 </table>
             </div>
         )
     },
     {
-        id: 4,
-        title: "System Architecture",
+        id: 5,
+        title: "Under the Hood: AI Workflow",
         content: (
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2rem' }}>
                 <p style={{ textAlign: 'center', color: '#4b5563', maxWidth: '700px' }}>
-                    A hybrid architecture leveraging the best of client-side speed (React) and server-side power (Python/Cloud).
+                    A hybrid architecture leveraging client-side speed (React) and server-side power (Cloud Run).
                 </p>
                 <div className="arch-flow">
                     <div className="arch-box" style={{ borderColor: '#3b82f6' }}>
-                        <Monitor size={48} color="#3b82f6" style={{ marginBottom: '0.5rem' }} />
-                        <span style={{ fontWeight: 'bold', color: '#1e3a8a' }}>Frontend (Browser)</span>
-                        <span style={{ color: '#4b5563', fontSize: '0.9rem' }}>React 18 + TypeScript</span>
-                        <span style={{ fontSize: '0.8rem', color: '#6b7280', marginTop: '0.25rem' }}>MediaRecorder, Canvas</span>
+                        <Monitor size={40} color="#3b82f6" style={{ marginBottom: '0.5rem' }} />
+                        <span style={{ fontWeight: 'bold', color: '#1e3a8a' }}>Frontend (Client)</span>
+                        <span style={{ color: '#4b5563', fontSize: '0.8rem' }}>React + TypeScript</span>
+                        <span style={{ fontSize: '0.75rem', color: '#6b7280', marginTop: '0.25rem' }}>MediaRecorder, Canvas</span>
                     </div>
                     <div style={{ fontSize: '2rem', color: '#9ca3af' }}>→</div>
                     <div className="arch-box" style={{ borderColor: '#22c55e' }}>
-                        <Server size={48} color="#22c55e" style={{ marginBottom: '0.5rem' }} />
+                        <Server size={40} color="#22c55e" style={{ marginBottom: '0.5rem' }} />
                         <span style={{ fontWeight: 'bold', color: '#14532d' }}>Backend API</span>
-                        <span style={{ color: '#4b5563', fontSize: '0.9rem' }}>FastAPI (Python)</span>
-                        <span style={{ fontSize: '0.8rem', color: '#6b7280', marginTop: '0.25rem' }}>Audio Conversion, Logic</span>
+                        <span style={{ color: '#4b5563', fontSize: '0.8rem' }}>FastAPI (Python)</span>
+                        <span style={{ fontSize: '0.75rem', color: '#6b7280', marginTop: '0.25rem' }}>FFmpeg, NumPy</span>
                     </div>
                     <div style={{ fontSize: '2rem', color: '#9ca3af' }}>→</div>
                     <div className="arch-box" style={{ borderColor: '#a855f7' }}>
-                        <Brain size={48} color="#a855f7" style={{ marginBottom: '0.5rem' }} />
-                        <span style={{ fontWeight: 'bold', color: '#581c87' }}>AI Services</span>
-                        <span style={{ color: '#4b5563', fontSize: '0.9rem' }}>Google Cloud + Models</span>
-                        <span style={{ fontSize: '0.8rem', color: '#6b7280', marginTop: '0.25rem' }}>STT, MediaPipe, TF</span>
+                        <Brain size={40} color="#a855f7" style={{ marginBottom: '0.5rem' }} />
+                        <span style={{ fontWeight: 'bold', color: '#581c87' }}>AI Models</span>
+                        <span style={{ color: '#4b5563', fontSize: '0.8rem' }}>Google Cloud + Local</span>
+                        <span style={{ fontSize: '0.75rem', color: '#6b7280', marginTop: '0.25rem' }}>Inference & Return</span>
                     </div>
                 </div>
-                <div style={{ background: '#f8fafc', padding: '1rem 2rem', borderRadius: '8px', border: '1px solid #e2e8f0', textAlign: 'center' }}>
-                    <h4 style={{ marginTop: 0, marginBottom: '0.5rem', color: '#334155' }}>Infrastructure: Google Cloud Run</h4>
-                    <p style={{ margin: 0, color: '#64748b' }}>Stateless Containers • Automatic Scaling • HTTPS Security</p>
-                </div>
-            </div>
-        )
-    },
-    {
-        id: 5,
-        title: "AI Workflow: Speech Pipeline",
-        content: (
-            <div>
-                <div className="step-list">
-                    <div className="step-item">
-                        <div className="step-number">1</div>
-                        <h4 style={{ marginTop: 0, color: '#0891b2' }}>Capture & Encode</h4>
-                        <p style={{ color: '#374151' }}>Browser records audio chunks using <code>MediaRecorder</code> API (WebM/Opus) to ensure low bandwidth usage.</p>
+
+                <div className="slide-grid-2" style={{ width: '100%' }}>
+                    <div className="feature-box" style={{ padding: '1rem', borderTop: '4px solid #22c55e' }}>
+                        <h4 style={{ margin: '0 0 0.5rem 0', color: '#14532d', fontSize: '0.9rem' }}>🗣️ Speech Stack</h4>
+                        <ul className="feature-list" style={{ fontSize: '0.85rem' }}>
+                            <li><strong>STT</strong>: Google Speech-to-Text V2</li>
+                            <li><strong>Emotion</strong>: Librosa (Features) + MLP Classifier</li>
+                            <li><strong>Format</strong>: WebM (Browser) → WAV (Server)</li>
+                        </ul>
                     </div>
-                    <div className="step-item">
-                        <div className="step-number">2</div>
-                        <h4 style={{ marginTop: 0, color: '#0891b2' }}>Transcode (Server)</h4>
-                        <p style={{ color: '#374151' }}>FastAPI receives the blob, uses <strong>FFmpeg</strong> to convert WebM → 16-bit PCM WAV (required by most models).</p>
-                    </div>
-                    <div className="step-item">
-                        <div className="step-number">3</div>
-                        <h4 style={{ marginTop: 0, color: '#0891b2' }}>Inference</h4>
-                        <p style={{ color: '#374151' }}>Audio is sent to Google Speech-to-Text V2. Emotion analysis runs locally using Librosa features + MLP Classifier.</p>
-                    </div>
-                    <div className="step-item">
-                        <div className="step-number">4</div>
-                        <h4 style={{ marginTop: 0, color: '#0891b2' }}>Analysis</h4>
-                        <p style={{ color: '#374151' }}>We calculate WER (Word Error Rate) & BLEU score to objectively measure transcription accuracy.</p>
+                    <div className="feature-box" style={{ padding: '1rem', borderTop: '4px solid #a855f7' }}>
+                        <h4 style={{ margin: '0 0 0.5rem 0', color: '#581c87', fontSize: '0.9rem' }}>👁️ Vision Stack</h4>
+                        <ul className="feature-list" style={{ fontSize: '0.85rem' }}>
+                            <li><strong>Hands/Pose/Face</strong>: MediaPipe (TensorFlow.js)</li>
+                            <li><strong>Gaze</strong>: Dlib (68 Landmarks) + OpenCV</li>
+                            <li><strong>Processing</strong>: mostly Client-Side (Low Latency)</li>
+                        </ul>
                     </div>
                 </div>
             </div>
@@ -186,55 +198,87 @@ const slides: Slide[] = [
     },
     {
         id: 6,
-        title: "AI Workflow: Vision Pipeline",
+        title: "Result #1: The Cold Start Reality",
+        subtitle: "The Cost of Serverless",
+        content: (
+            <div className="slide-content-inner">
+                <div className="feature-box" style={{ background: '#fef3c7', borderColor: '#f59e0b', marginBottom: '2rem' }}>
+                    <h3 style={{ color: '#d97706', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <AlertTriangle size={24} /> The "Slow Button" Phenomenon
+                    </h3>
+                    <p style={{ color: '#78350f', lineHeight: '1.6' }}>
+                        Users often report the "Submit" button is broken on the first try. It isn't broke—it's <strong>sleeping</strong>.
+                    </p>
+                </div>
+
+                <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'center', height: '200px', gap: '3rem', marginBottom: '1rem' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '120px' }}>
+                        <span style={{ fontWeight: 'bold', color: '#dc2626', marginBottom: '0.5rem' }}>~5-8 sec</span>
+                        <div style={{ width: '80px', height: '180px', background: '#fca5a5', borderRadius: '4px 4px 0 0', position: 'relative' }}>
+                            <span style={{ position: 'absolute', bottom: '10px', width: '100%', textAlign: 'center', fontSize: '0.8rem', color: '#7f1d1d' }}>Cold Start</span>
+                        </div>
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '120px' }}>
+                        <span style={{ fontWeight: 'bold', color: '#16a34a', marginBottom: '0.5rem' }}>~200 ms</span>
+                        <div style={{ width: '80px', height: '40px', background: '#86efac', borderRadius: '4px 4px 0 0', position: 'relative' }}>
+                            <span style={{ position: 'absolute', bottom: '10px', width: '100%', textAlign: 'center', fontSize: '0.8rem', color: '#14532d' }}>Warm</span>
+                        </div>
+                    </div>
+                </div>
+
+                <p style={{ textAlign: 'center', color: '#4b5563', fontStyle: 'italic' }}>
+                    "Serverless saves money ($0 when idle), but costs user experience (initial latency)."
+                </p>
+            </div>
+        )
+    },
+    {
+        id: 7,
+        title: "Result #2: The Accent Gap",
+        subtitle: "Bias in Speech Recognition",
         content: (
             <div className="slide-grid-2">
-                <div className="feature-box">
-                    <h4 style={{ color: '#db2777', marginBottom: '1rem', marginTop: 0 }}>Input Stream</h4>
-                    <ol style={{ paddingLeft: '1.2rem', color: '#374151', lineHeight: '1.6' }}>
-                        <li><strong>Capture</strong>: Webcam feed accessed via <code>navigator.mediaDevices</code>.</li>
-                        <li><strong>Sampling</strong>: Frames extracted every 100ms (10 FPS) to balance load.</li>
-                        <li><strong>Transmission</strong>: Base64 encoded frames sent to backend (or processed client-side).</li>
-                    </ol>
+                <div>
+                    <p style={{ color: '#4b5563', marginBottom: '1.5rem', lineHeight: '1.6' }}>
+                        We tested the same sentence ("The quick brown fox...") across diverse groups. The drop-off for non-native speakers is stark.
+                    </p>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', padding: '1rem', background: 'white', border: '1px solid #e5e7eb', borderRadius: '8px', boxShadow: '0 2px 4px rgba(0,0,0,0.05)' }}>
+                            <span>Standard American English</span>
+                            <span style={{ fontWeight: 'bold', color: '#16a34a' }}>~98% Accuracy</span>
+                        </div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', padding: '1rem', background: 'white', border: '1px solid #e5e7eb', borderRadius: '8px', boxShadow: '0 2px 4px rgba(0,0,0,0.05)' }}>
+                            <span>European Accents (French/German)</span>
+                            <span style={{ fontWeight: 'bold', color: '#ca8a04' }}>~85% Accuracy</span>
+                        </div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', padding: '1rem', background: 'white', border: '1px solid #e5e7eb', borderRadius: '8px', boxShadow: '0 2px 4px rgba(0,0,0,0.05)' }}>
+                            <span>Strong Regional Accents</span>
+                            <span style={{ fontWeight: 'bold', color: '#dc2626' }}>~60-70% Accuracy</span>
+                        </div>
+                    </div>
                 </div>
-                <div className="feature-box">
-                    <h4 style={{ color: '#db2777', marginBottom: '1rem', marginTop: 0 }}>Model Stack</h4>
+                <div className="feature-box" style={{ background: '#f8fafc' }}>
+                    <h3 className="slide-subtitle" style={{ color: '#334155' }}>Why this happens?</h3>
                     <ul className="feature-list">
-                        <li>🖐️ <strong>Hands</strong>: MediaPipe Hands (21 3D landmarks)</li>
-                        <li>💃 <strong>Body</strong>: MediaPipe Pose (33 landmarks)</li>
-                        <li>😐 <strong>Face</strong>: MediaPipe Face Mesh (468 landmarks)</li>
-                        <li>👀 <strong>Gaze</strong>: Dlib (68 points) + OpenCV Logic</li>
-                        <li>🎭 <strong>Filters</strong>: Custom Canvas rendering on landmarks</li>
+                        <li><strong>Training Data</strong>: Models are trained primarily on "Broadcast Standard" English.</li>
+                        <li><strong>Phone Mismatch</strong>: Specific phonemes (e.g., 'th' vs 'z') are misclassified consistently.</li>
+                        <li><strong>Context</strong>: Models rely on probability; unexpected grammar patterns lower probability scores.</li>
                     </ul>
                 </div>
             </div>
         )
     },
     {
-        id: 7,
-        title: "Key Findings & Results",
+        id: 8,
+        title: "Result #3: Vision Latency Trade-offs",
+        subtitle: "Accuracy vs. Speed",
         content: (
-            <div className="slide-grid-2">
-                <div>
-                    <h3 style={{ color: '#b45309', marginBottom: '1rem' }}>Speech Accuracy Realities</h3>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0.75rem', background: 'white', border: '1px solid #e5e7eb', borderRadius: '4px' }}>
-                            <span>Standard American English</span>
-                            <span style={{ fontWeight: 'bold', color: '#16a34a' }}>~95%</span>
-                        </div>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0.75rem', background: 'white', border: '1px solid #e5e7eb', borderRadius: '4px' }}>
-                            <span>Non-Native Accents</span>
-                            <span style={{ fontWeight: 'bold', color: '#ca8a04' }}>~75-80%</span>
-                        </div>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0.75rem', background: 'white', border: '1px solid #e5e7eb', borderRadius: '4px' }}>
-                            <span>Noisy Environments (Café)</span>
-                            <span style={{ fontWeight: 'bold', color: '#dc2626' }}>~45-60%</span>
-                        </div>
-                    </div>
-                </div>
+            <div className="slide-content-inner">
+                <p style={{ textAlign: 'center', marginBottom: '2rem', color: '#4b5563' }}>
+                    For an interface to feel "real-time", latency must stay below <strong>100ms</strong>.
+                </p>
 
-                <div>
-                    <h3 style={{ color: '#b45309', marginBottom: '1rem' }}>Vision Latency</h3>
+                <div className="slide-grid-2">
                     <div className="feature-box">
                         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem', paddingBottom: '0.5rem', borderBottom: '1px solid #e5e7eb' }}>
                             <span style={{ color: '#6b7280' }}>Feature</span>
@@ -242,52 +286,22 @@ const slides: Slide[] = [
                         </div>
                         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
                             <span>Gesture (Hand)</span>
-                            <span style={{ fontFamily: 'monospace', color: '#0891b2' }}>&lt; 50ms</span>
+                            <span style={{ fontFamily: 'monospace', color: '#16a34a', fontWeight: 'bold' }}>&lt; 30ms (Smooth)</span>
                         </div>
                         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
                             <span>Full Body Pose</span>
-                            <span style={{ fontFamily: 'monospace', color: '#0891b2' }}>~80ms</span>
+                            <span style={{ fontFamily: 'monospace', color: '#ca8a04', fontWeight: 'bold' }}>~80ms (Acceptable)</span>
                         </div>
                         <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                             <span>Gaze Tracking</span>
-                            <span style={{ fontFamily: 'monospace', color: '#0891b2' }}>~120ms</span>
+                            <span style={{ fontFamily: 'monospace', color: '#dc2626', fontWeight: 'bold' }}>~120ms (Laggy)</span>
                         </div>
                     </div>
-                    <p style={{ fontStyle: 'italic', color: '#6b7280', borderLeft: '3px solid #facc15', paddingLeft: '1rem', marginTop: '1rem', background: '#fffbeb', padding: '0.75rem' }}>
-                        "Latency above 100ms breaks the illusion of direct manipulation."
-                    </p>
-                </div>
-            </div>
-        )
-    },
-    {
-        id: 8,
-        title: "Risks: Privacy & Data",
-        content: (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-                <div className="feature-box" style={{ borderColor: '#fca5a5', background: '#fef2f2', display: 'flex', gap: '1rem' }}>
-                    <Shield color="#ef4444" size={24} style={{ marginTop: '4px' }} />
-                    <div>
-                        <h3 style={{ fontWeight: 'bold', color: '#991b1b', fontSize: '1.2rem', marginTop: 0 }}>Privacy Concerns</h3>
-                        <p style={{ color: '#7f1d1d', margin: '0.5rem 0 1rem' }}>
-                            Biometric data (voice prints, gait, face scan) is immutable. Once stolen, it cannot be "reset" like a password.
+                    <div className="feature-box" style={{ background: '#eff6ff', borderColor: '#3b82f6' }}>
+                        <h4 style={{ color: '#1e40af', marginTop: 0 }}>The "Uncanny Valley" of Interaction</h4>
+                        <p style={{ fontSize: '0.9rem', color: '#1e3a8a', lineHeight: '1.6' }}>
+                            When latency exceeds 100ms (like in Gaze Tracking), users start to overcompensate, moving their heads further than needed. The interface feels "slippery" rather than responsive.
                         </p>
-                        <ul className="feature-list" style={{ marginTop: '0.5rem' }}>
-                            <li>🛑 Voice = biometric identifier</li>
-                            <li>🛑 Gaze patterns = subconscious intent surveillance</li>
-                        </ul>
-                    </div>
-                </div>
-
-                <div className="feature-box" style={{ borderColor: '#86efac', background: '#f0fdf4', display: 'flex', gap: '1rem' }}>
-                    <Shield color="#22c55e" size={24} style={{ marginTop: '4px' }} />
-                    <div>
-                        <h3 style={{ fontWeight: 'bold', color: '#166534', fontSize: '1.2rem', marginTop: 0 }}>Lab Mitigations</h3>
-                        <ul className="feature-list" style={{ marginTop: '0.5rem' }}>
-                            <li>✅ <strong>Ephemeral Processing</strong>: Audio/Video is processed in RAM and discarded immediately.</li>
-                            <li>✅ <strong>No Storage</strong>: We do not save user data to any database.</li>
-                            <li>✅ <strong>Client-Side First</strong>: Where possible (e.g. some vision tasks), data never leaves the browser.</li>
-                        </ul>
                     </div>
                 </div>
             </div>
@@ -295,8 +309,8 @@ const slides: Slide[] = [
     },
     {
         id: 9,
-        title: "Ethical Implications: Bias",
-        subtitle: "Technology is not neutral",
+        title: "Ethical Critical: Bias & Exclusion",
+        subtitle: "Who does the system fail?",
         content: (
             <div>
                 <div className="feature-box" style={{ marginBottom: '1.5rem', background: 'white' }}>
@@ -305,14 +319,14 @@ const slides: Slide[] = [
                     </h3>
                     <p style={{ marginBottom: '1rem', color: '#4b5563' }}>Through these experiments, we consistently observe that off-the-shelf models fail for marginalized groups:</p>
                     <ul className="feature-list">
-                        <li><span style={{ color: '#ef4444' }}>•</span> <strong>Accent Bias</strong>: Systems optimized for "Broadcast English" fail speakers with regional accents.</li>
-                        <li><span style={{ color: '#ef4444' }}>•</span> <strong>Racial Bias</strong>: Facial recognition often struggles with lighting and contrast on darker skin tones.</li>
-                        <li><span style={{ color: '#ef4444' }}>•</span> <strong>Ableism</strong>: Gesture interfaces assume distinct hands and standard range of motion.</li>
+                        <li><span style={{ color: '#ef4444' }}>•</span> <strong>Accent Bias</strong>: Systems optimized for "Standard" speech fail regional speakers.</li>
+                        <li><span style={{ color: '#ef4444' }}>•</span> <strong>Racial Bias</strong>: Facial recognition (Face Mesh) struggles with lighting contrast on darker skin tones.</li>
+                        <li><span style={{ color: '#ef4444' }}>•</span> <strong>Ableism</strong>: Gesture interfaces assume two distinct hands and standard range of motion.</li>
                     </ul>
                 </div>
 
                 <div style={{ background: '#eff6ff', padding: '1.5rem', borderRadius: '0.5rem', borderLeft: '5px solid #3b82f6' }}>
-                    <h4 style={{ fontWeight: 'bold', color: '#1e40af', margin: 0, marginBottom: '0.5rem' }}>HCI Design Principle</h4>
+                    <h4 style={{ fontWeight: 'bold', color: '#1e40af', margin: 0, marginBottom: '0.5rem' }}>HCI Design Mandate</h4>
                     <p style={{ fontSize: '1.1rem', color: '#1e3a8a', margin: 0, fontStyle: 'italic' }}>
                         "No single modality is universally accessible. Designers MUST provide redundant/alternative methods (Multimodality) to ensure inclusion."
                     </p>
@@ -322,6 +336,36 @@ const slides: Slide[] = [
     },
     {
         id: 10,
+        title: "Privacy & Data Safety",
+        subtitle: "Respecting the User",
+        content: (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                <div className="feature-box" style={{ borderColor: '#fca5a5', background: '#fef2f2', display: 'flex', gap: '1rem' }}>
+                    <Shield color="#ef4444" size={24} style={{ marginTop: '4px' }} />
+                    <div>
+                        <h3 style={{ fontWeight: 'bold', color: '#991b1b', fontSize: '1.2rem', marginTop: 0 }}>Privacy Concerns</h3>
+                        <p style={{ color: '#7f1d1d', margin: '0.5rem 0 0.5rem' }}>
+                            Biometric data (voice prints, face scans) is immutable. Once stolen, it cannot be "reset" like a password.
+                        </p>
+                    </div>
+                </div>
+
+                <div className="feature-box" style={{ borderColor: '#86efac', background: '#f0fdf4', display: 'flex', gap: '1rem' }}>
+                    <Shield color="#22c55e" size={24} style={{ marginTop: '4px' }} />
+                    <div>
+                        <h3 style={{ fontWeight: 'bold', color: '#166534', fontSize: '1.2rem', marginTop: 0 }}>Lab Mitigations</h3>
+                        <ul className="feature-list" style={{ marginTop: '0.5rem' }}>
+                            <li>✅ <strong>Ephemeral Processing</strong>: Audio/Video is processed in RAM and discarded immediately.</li>
+                            <li>✅ <strong>No Storage</strong>: We do not save ANY user data to databases.</li>
+                            <li>✅ <strong>Client-Side First</strong>: Where possible (e.g. MediaPipe), raw video never leaves your browser.</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        )
+    },
+    {
+        id: 11,
         title: "Conclusion & Future",
         content: (
             <div style={{ display: 'flex', flexDirection: 'column', height: '100%', justifyContent: 'space-between' }}>
@@ -332,7 +376,7 @@ const slides: Slide[] = [
                             <li>AI is a <strong>probabilistic</strong> tool, not a magic wand.</li>
                             <li>Systems must handle <strong>failure</strong> gracefully (fallbacks).</li>
                             <li><strong>Context</strong> matters (noise, lighting, user state).</li>
-                            <li><strong>Responsibility</strong> lies with the designer, not the user.</li>
+                            <li>Responsibility lies with the <strong>designer</strong>, not the user.</li>
                         </ol>
                     </div>
                     <div>

@@ -65,7 +65,7 @@ export default function AccentTest() {
       const recorder = new MediaRecorder(stream, options)
       const chunks: Blob[] = []
 
-      recorder.ondataavailable = (e) => {
+      recorder.ondataavailable = (e: BlobEvent) => {
         if (e.data.size > 0) chunks.push(e.data)
       }
 

@@ -30,6 +30,18 @@ export default function MultilingualTest() {
   const analysisRef = useRef<number>(0)
   const audioContextRef = useRef<AudioContext | null>(null)
 
+  useEffect(() => {
+    const fetchLanguages = async () => {
+      try {
+        const response = await axios.get(`${API_URL}/languages`)
+        setLanguages(response.data.languages)
+      } catch (error) {
+        console.error('Error fetching languages:', error)
+      }
+    }
+    fetchLanguages()
+  }, [])
+
   const startRecording = async () => {
     if (!selectedLang || !targetPhrase) {
       alert('Please select a language and enter a target phrase first!')
@@ -68,7 +80,7 @@ export default function MultilingualTest() {
       const recorder = new MediaRecorder(stream, options)
       const chunks: Blob[] = []
 
-      recorder.ondataavailable = (e) => {
+      recorder.ondataavailable = (e: BlobEvent) => {
         if (e.data.size > 0) chunks.push(e.data)
       }
 

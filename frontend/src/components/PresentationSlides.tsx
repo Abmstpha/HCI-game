@@ -13,6 +13,39 @@ interface Slide {
 const slides: Slide[] = [
     {
         id: 1,
+        title: "HCI Games Lab",
+        subtitle: "Bridging the Gap Between Theory and Reality in AI",
+        content: (
+            <div className="slide-content-inner">
+                <div style={{ marginBottom: '2rem', textAlign: 'center' }}>
+                    <p style={{ fontSize: '1.25rem', color: '#4b5563', maxWidth: '800px', margin: '0 auto' }}>
+                        Welcome to a hands-on educational platform designed to demonstrate the <strong>capabilities</strong>, <strong>limitations</strong>, and <strong>biases</strong> of modern Human-Computer Interaction systems.
+                    </p>
+                    <p style={{ marginTop: '1.5rem', fontSize: '1.1rem', color: '#64748b', fontWeight: 500 }}>
+                        Presented by: <strong>Abdellahi & Darryl</strong>
+                    </p>
+                </div>
+                <div className="slide-grid-2">
+                    <div className="feature-box">
+                        <h3 className="slide-subtitle" style={{ marginBottom: '1rem', color: '#0891b2', display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: 600 }}>
+                            <Brain size={24} /> The Concept
+                        </h3>
+                        <p style={{ marginBottom: '1rem', lineHeight: '1.6' }}>
+                            Students often learn AI concepts in a vacuum. This platform forces them to interact with real models (Speech, Vision, Emotion) in real-time, revealing how these systems <em>actually</em> behave in the wild.
+                        </p>
+                    </div>
+                    <div className="feature-box" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: '#f0f9ff', border: '1px solid #bae6fd' }}>
+                        <h3 className="slide-subtitle" style={{ marginBottom: '1rem', fontSize: '1.2rem', color: '#0369a1' }}>Live Demo Available</h3>
+                        <p style={{ fontSize: '0.9rem', color: '#64748b', textAlign: 'center' }}>
+                            No installation required • Works in Browser
+                        </p>
+                    </div>
+                </div>
+            </div>
+        )
+    },
+    {
+        id: 2,
         title: "The Learning Gap (For Students)",
         subtitle: "Why we built this platform",
         content: (
@@ -48,7 +81,7 @@ const slides: Slide[] = [
         )
     },
     {
-        id: 2,
+        id: 3,
         title: "A Visual Teaching Tool (For Professors)",
         subtitle: "Don't just describe the Black Box. Open it.",
         content: (
@@ -75,7 +108,7 @@ const slides: Slide[] = [
         )
     },
     {
-        id: 3,
+        id: 4,
         title: "The Core Challenge",
         subtitle: "Bridging the Gap",
         content: (
@@ -114,7 +147,7 @@ const slides: Slide[] = [
         )
     },
     {
-        id: 4,
+        id: 5,
         title: "The Solution Overview",
         subtitle: "10 Interactive Modules",
         content: (
@@ -145,7 +178,7 @@ const slides: Slide[] = [
         )
     },
     {
-        id: 5,
+        id: 6,
         title: "Under the Hood: AI Workflow",
         content: (
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2rem' }}>
@@ -196,46 +229,11 @@ const slides: Slide[] = [
             </div>
         )
     },
-    {
-        id: 6,
-        title: "Result #1: The Cold Start Reality",
-        subtitle: "The Cost of Serverless",
-        content: (
-            <div className="slide-content-inner">
-                <div className="feature-box" style={{ background: '#fef3c7', borderColor: '#f59e0b', marginBottom: '2rem' }}>
-                    <h3 style={{ color: '#d97706', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                        <AlertTriangle size={24} /> The "Slow Button" Phenomenon
-                    </h3>
-                    <p style={{ color: '#78350f', lineHeight: '1.6' }}>
-                        Users often report the "Submit" button is broken on the first try. It isn't broke—it's <strong>sleeping</strong>.
-                    </p>
-                </div>
 
-                <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'center', height: '200px', gap: '3rem', marginBottom: '1rem' }}>
-                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '120px' }}>
-                        <span style={{ fontWeight: 'bold', color: '#dc2626', marginBottom: '0.5rem' }}>~5-8 sec</span>
-                        <div style={{ width: '80px', height: '180px', background: '#fca5a5', borderRadius: '4px 4px 0 0', position: 'relative' }}>
-                            <span style={{ position: 'absolute', bottom: '10px', width: '100%', textAlign: 'center', fontSize: '0.8rem', color: '#7f1d1d' }}>Cold Start</span>
-                        </div>
-                    </div>
-                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '120px' }}>
-                        <span style={{ fontWeight: 'bold', color: '#16a34a', marginBottom: '0.5rem' }}>~200 ms</span>
-                        <div style={{ width: '80px', height: '40px', background: '#86efac', borderRadius: '4px 4px 0 0', position: 'relative' }}>
-                            <span style={{ position: 'absolute', bottom: '10px', width: '100%', textAlign: 'center', fontSize: '0.8rem', color: '#14532d' }}>Warm</span>
-                        </div>
-                    </div>
-                </div>
-
-                <p style={{ textAlign: 'center', color: '#4b5563', fontStyle: 'italic' }}>
-                    "Serverless saves money ($0 when idle), but costs user experience (initial latency)."
-                </p>
-            </div>
-        )
-    },
     {
         id: 7,
-        title: "Result #2: The Accent Gap",
-        subtitle: "Bias in Speech Recognition",
+        title: "Insight #1: The Accent Gap",
+        subtitle: "AI Bias in Action",
         content: (
             <div className="slide-grid-2">
                 <div>
@@ -270,8 +268,8 @@ const slides: Slide[] = [
     },
     {
         id: 8,
-        title: "Result #3: Vision Latency Trade-offs",
-        subtitle: "Accuracy vs. Speed",
+        title: "Insight #2: The Latency Threshold",
+        subtitle: "Responsibility in Design",
         content: (
             <div className="slide-content-inner">
                 <p style={{ textAlign: 'center', marginBottom: '2rem', color: '#4b5563' }}>

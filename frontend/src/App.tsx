@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Mic, Type, Globe, Volume2, Sparkles, Home, Hand, Activity, Smile, Podcast, Eye, Camera } from 'lucide-react'
+import { Type, Globe, Volume2, Sparkles, Home, Hand, Activity, Smile, Podcast, Eye, Camera, BookOpen, PlayCircle, Brain } from 'lucide-react'
 import './App.css'
 import SpeechVsTyping from './components/SpeechVsTyping'
 import AccentTest from './components/AccentTest'
@@ -10,11 +10,13 @@ import VisionExperience from './components/VisionExperience'
 import VoiceEmotion from './components/VoiceEmotion'
 import GazeTracking from './components/GazeTracking'
 import FaceFilter from './components/FaceFilter'
+import PresentationSlides from './components/PresentationSlides'
 
 type ExperimentId = null | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10
 
 function App() {
   const [activeExperiment, setActiveExperiment] = useState<ExperimentId>(null)
+  const [showPresentation, setShowPresentation] = useState(false)
 
   const experiments = [
     {
@@ -214,22 +216,35 @@ function App() {
               exit={{ opacity: 0, y: -20 }}
               className="home-view"
             >
-              {/* Header */}
               <motion.div
                 className="header"
                 initial={{ opacity: 0, y: -30 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.2 }}
               >
-                <div className="flex items-center justify-center gap-3 mb-3" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '0.75rem', marginBottom: '0.75rem' }}>
-                  <Mic style={{ width: '48px', height: '48px', color: '#22d3ee' }} />
-                  <h1 className="title">
-                    <span className="gradient-text">Choose Your Game</span>
-                  </h1>
+                <div className="header-content">
+                  <div className="header-title-row">
+                    <Brain style={{ width: '48px', height: '48px', color: '#22d3ee' }} />
+                    <h1 className="title" style={{ fontSize: '3.5rem', letterSpacing: '-0.02em' }}>
+                      <span className="gradient-text">HCI Games Lab</span>
+                    </h1>
+                  </div>
+
+                  <p className="header-subtitle">
+                    Interactive AI Education Platform
+                  </p>
+
+                  <motion.button
+                    onClick={() => setShowPresentation(true)}
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    className="system-presentation-btn group"
+                  >
+                    <BookOpen size={20} className="book-icon" style={{ color: '#22d3ee' }} />
+                    <span className="font-semibold">System Presentation</span>
+                    <PlayCircle size={16} className="play-icon" style={{ color: 'rgba(255,255,255,0.5)' }} />
+                  </motion.button>
                 </div>
-                <p className="subtitle">
-                  ⚡ Advanced HCI Laboratory ⚡
-                </p>
               </motion.div>
 
               {/* Experiments Grid */}
@@ -286,6 +301,12 @@ function App() {
           )}
         </AnimatePresence>
       </div>
+
+      <AnimatePresence>
+        {showPresentation && (
+          <PresentationSlides onClose={() => setShowPresentation(false)} />
+        )}
+      </AnimatePresence>
     </div>
   )
 }

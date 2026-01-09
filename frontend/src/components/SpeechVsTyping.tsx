@@ -264,13 +264,35 @@ export default function SpeechVsTyping() {
             </div>
           </div>
 
-          <div style={{ marginTop: '2rem', padding: '1.5rem', background: 'rgba(0,0,0,0.3)', borderRadius: '12px' }}>
-            <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.875rem', marginBottom: '0.5rem' }}>
-              Transcribed:
-            </p>
-            <p style={{ color: 'white', fontSize: '1rem', fontWeight: 600 }}>
-              "{speechResult.text}"
-            </p>
+          <div style={{ marginTop: '2rem', display: 'grid', gap: '1rem' }}>
+            <div style={{ padding: '1.5rem', background: 'rgba(0,0,0,0.3)', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.1)' }}>
+              <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: '0.875rem', marginBottom: '0.5rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                Target Sentence
+              </p>
+              <p style={{ color: '#ffffff', fontSize: '1.1rem', fontWeight: 500 }}>
+                "{TARGET_SENTENCE}"
+              </p>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+              <div style={{ padding: '1.5rem', background: 'rgba(0,255,255,0.1)', borderRadius: '12px', border: '1px solid rgba(0,255,255,0.2)' }}>
+                <p style={{ color: '#00ffff', fontSize: '0.875rem', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <Keyboard size={16} /> You Typed:
+                </p>
+                <p style={{ color: 'white', fontSize: '1rem' }}>
+                  "{typingResult.text}"
+                </p>
+              </div>
+
+              <div style={{ padding: '1.5rem', background: 'rgba(255,0,255,0.1)', borderRadius: '12px', border: '1px solid rgba(255,0,255,0.2)' }}>
+                <p style={{ color: '#ff00ff', fontSize: '0.875rem', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <Mic size={16} /> You Said:
+                </p>
+                <p style={{ color: 'white', fontSize: '1rem' }}>
+                  "{speechResult.text}"
+                </p>
+              </div>
+            </div>
           </div>
 
           <button className="btn btn-primary" onClick={reset} style={{ width: '100%', marginTop: '2rem' }}>

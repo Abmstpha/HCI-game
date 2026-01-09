@@ -199,6 +199,12 @@ async def transcribe_audio(
         # Read audio file
         audio_data = await audio.read()
         logger.info(f"Received audio data size: {len(audio_data)} bytes")
+        logger.info(f"Audio filename: {audio.filename}, content_type: {audio.content_type}")
+        
+        # Log first few bytes to identify format
+        if len(audio_data) > 20:
+            header_hex = audio_data[:20].hex()
+            logger.info(f"Audio header (hex): {header_hex}")
         
         if len(audio_data) == 0:
             logger.error("Received empty audio file")
@@ -213,25 +219,32 @@ async def transcribe_audio(
         # Convert audio to WAV using pydub
         try:
             # Try to load the audio using pydub (handles webm, m4a, etc.)
+            logger.info("Attempting pydub conversion...")
             audio_segment = AudioSegment.from_file(io.BytesIO(audio_data))
+            logger.info(f"Pydub loaded: duration={len(audio_segment)}ms, channels={audio_segment.channels}, sample_width={audio_segment.sample_width}")
             
             # Export to wav for speech_recognition
             wav_buffer = io.BytesIO()
             audio_segment.export(wav_buffer, format="wav")
             wav_buffer.seek(0)
+            wav_size = len(wav_buffer.getvalue())
+            logger.info(f"Exported WAV size: {wav_size} bytes")
             
             source_file = wav_buffer
         except Exception as conversion_error:
-            print(f"Conversion Error: {str(conversion_error)}")
+            logger.error(f"Conversion Error: {str(conversion_error)}")
             # Fallback to original data if conversion fails (might be already wav)
             source_file = io.BytesIO(audio_data)
         
         # Convert to AudioData format
         with sr.AudioFile(source_file) as source:
             audio_input = recognizer.record(source)
+            logger.info(f"AudioData created, sample_rate={source.SAMPLE_RATE}, sample_width={source.SAMPLE_WIDTH}")
         
         # Transcribe
+        logger.info(f"Calling Google Speech API with language={language}...")
         transcription = recognizer.recognize_google(audio_input, language=language)
+        logger.info(f"Transcription result: '{transcription}'")
         end_time = time.time()
         
         latency = end_time - start_time

@@ -86,6 +86,8 @@ export default function SpeechVsTyping() {
       recorder.start(100)
       setMediaRecorder(recorder)
       setIsRecording(true)
+        // Store start time for minimum duration check
+        ; (window as unknown as Record<string, number>).recordingStartTime = Date.now()
     } catch (error) {
       console.error('Error accessing microphone:', error)
       alert('Please allow microphone access!')
@@ -94,6 +96,20 @@ export default function SpeechVsTyping() {
 
   const stopRecording = () => {
     if (mediaRecorder) {
+      // Enforce minimum 1.5 second recording
+      const startTime = (window as unknown as Record<string, number>).recordingStartTime || 0
+      const elapsed = Date.now() - startTime
+      if (elapsed < 1500) {
+        const remaining = 1500 - elapsed
+        setTimeout(() => {
+          if (mediaRecorder && mediaRecorder.state === 'recording') {
+            mediaRecorder.stop()
+            setIsRecording(false)
+            setMediaRecorder(null)
+          }
+        }, remaining)
+        return
+      }
       mediaRecorder.stop()
       setIsRecording(false)
       setMediaRecorder(null)

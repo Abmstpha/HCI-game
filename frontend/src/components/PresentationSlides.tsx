@@ -24,9 +24,6 @@ const slides: Slide[] = [
                     <p style={{ fontSize: '1.25rem', color: '#4b5563', maxWidth: '800px', margin: '0 auto' }}>
                         Welcome to a hands-on educational platform designed to demonstrate the <strong>capabilities</strong>, <strong>limitations</strong>, and <strong>biases</strong> of modern Human-Computer Interaction systems.
                     </p>
-                    <p style={{ marginTop: '1.5rem', fontSize: '1.1rem', color: '#64748b', fontWeight: 500 }}>
-                        Presented by: <strong>Abdellahi & Darryl</strong>
-                    </p>
                 </div>
                 <div className="slide-grid-2">
                     <div className="feature-box">

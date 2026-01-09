@@ -275,20 +275,20 @@ export default function SpeechVsTyping() {
             </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-              <div style={{ padding: '1.5rem', background: 'rgba(0,255,255,0.1)', borderRadius: '12px', border: '1px solid rgba(0,255,255,0.2)' }}>
-                <p style={{ color: '#00ffff', fontSize: '0.875rem', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  <Keyboard size={16} /> You Typed:
+              <div style={{ padding: '1.5rem', background: 'rgba(0,255,255,0.2)', borderRadius: '12px', border: '1px solid rgba(0,180,180,0.4)', boxShadow: '0 4px 6px rgba(0,0,0,0.05)' }}>
+                <p style={{ color: '#0e7490', fontSize: '0.9rem', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: 600 }}>
+                  <Keyboard size={18} /> You Typed:
                 </p>
-                <p style={{ color: 'white', fontSize: '1rem' }}>
+                <p style={{ color: '#0f172a', fontSize: '1.1rem', fontWeight: 500, lineHeight: 1.5 }}>
                   "{typingResult.text}"
                 </p>
               </div>
 
-              <div style={{ padding: '1.5rem', background: 'rgba(255,0,255,0.1)', borderRadius: '12px', border: '1px solid rgba(255,0,255,0.2)' }}>
-                <p style={{ color: '#ff00ff', fontSize: '0.875rem', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  <Mic size={16} /> You Said:
+              <div style={{ padding: '1.5rem', background: 'rgba(255,0,255,0.2)', borderRadius: '12px', border: '1px solid rgba(180,0,180,0.4)', boxShadow: '0 4px 6px rgba(0,0,0,0.05)' }}>
+                <p style={{ color: '#be185d', fontSize: '0.9rem', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: 600 }}>
+                  <Mic size={18} /> You Said:
                 </p>
-                <p style={{ color: 'white', fontSize: '1rem' }}>
+                <p style={{ color: '#0f172a', fontSize: '1.1rem', fontWeight: 500, lineHeight: 1.5 }}>
                   "{speechResult.text}"
                 </p>
               </div>

@@ -193,6 +193,17 @@ async def transcribe_audio(
     try:
         # Read audio file
         audio_data = await audio.read()
+        logger.info(f"Received audio data size: {len(audio_data)} bytes")
+        
+        if len(audio_data) == 0:
+            logger.error("Received empty audio file")
+            return TranscriptionResponse(
+                transcription="",
+                accuracy=0.0,
+                latency=0.0,
+                success=False,
+                error_message="Received empty audio file"
+            )
         
         # Convert audio to WAV using pydub
         try:

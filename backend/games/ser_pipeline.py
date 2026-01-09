@@ -34,10 +34,18 @@ class SpeechEmotionRecognizer:
         
     def load_model(self):
         try:
+            print(f"DEBUG: Looking for model at: {self.model_path}")
+            # Check if directory exists
+            model_dir = os.path.dirname(self.model_path)
+            if os.path.exists(model_dir):
+                print(f"DEBUG: Directory {model_dir} contents: {os.listdir(model_dir)}")
+            else:
+                print(f"DEBUG: Directory {model_dir} DOES NOT EXIST")
+
             if os.path.exists(self.model_path):
                 with open(self.model_path, 'rb') as file:
                     self.model = pickle.load(file)
-                print(f"SER Model loaded from {self.model_path}")
+                print(f"SER Model loaded successfully from {self.model_path}")
             else:
                 print("SER Model not found. Training required or upload model.")
         except Exception as e:

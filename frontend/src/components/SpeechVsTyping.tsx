@@ -57,28 +57,42 @@ export default function SpeechVsTyping() {
 
   const startRecording = async () => {
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
-      const recorder = new MediaRecorder(stream)
+      // Disable audio processing to prevent silence/cancellation issues
+      const stream = await navigator.mediaDevices.getUserMedia({
+        audio: {
+          echoCancellation: false,
+          autoGainControl: false,
+          noiseSuppression: false,
+          channelCount: 1
+        }
+      })
+
+      // Use specific codec for better compatibility
+      let options = {}
+      if (MediaRecorder.isTypeSupported('audio/webm;codecs=opus')) {
+        options = { mimeType: 'audio/webm;codecs=opus' }
+      } else if (MediaRecorder.isTypeSupported('audio/webm')) {
+        options = { mimeType: 'audio/webm' }
+      }
+
+      const recorder = new MediaRecorder(stream, options)
       const chunks: Blob[] = []
 
       recorder.ondataavailable = (e) => {
-        console.log('Chunk received, size:', e.data.size)
-        chunks.push(e.data)
+        if (e.data.size > 0) chunks.push(e.data)
       }
 
       recorder.onstop = async () => {
-        // Combine all chunks into a single blob
-        const blob = new Blob(chunks, { type: recorder.mimeType || 'audio/webm' })
-        console.log('Final audio blob size:', blob.size, 'bytes, type:', blob.type, 'chunks:', chunks.length)
+        // Use the actual mimeType of the recorder
+        const blob = new Blob(chunks, { type: recorder.mimeType })
+        console.log('Audio blob size:', blob.size, 'bytes, type:', blob.type)
         await transcribeAudio(blob)
         stream.getTracks().forEach(track => track.stop())
       }
 
-      // Start recording without timeslice - browser will fire ondataavailable on stop
       recorder.start()
       setMediaRecorder(recorder)
       setIsRecording(true)
-      console.log('Recording started, mimeType:', recorder.mimeType)
     } catch (error) {
       console.error('Error accessing microphone:', error)
       alert('Please allow microphone access!')
@@ -86,8 +100,7 @@ export default function SpeechVsTyping() {
   }
 
   const stopRecording = () => {
-    if (mediaRecorder && mediaRecorder.state === 'recording') {
-      console.log('Stopping recording...')
+    if (mediaRecorder) {
       mediaRecorder.stop()
       setIsRecording(false)
       setMediaRecorder(null)

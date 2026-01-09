@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { X, ChevronLeft, ChevronRight, Monitor, Server, Brain, Shield, AlertTriangle, Lightbulb, Zap, Users } from 'lucide-react'
+import { X, ChevronLeft, ChevronRight, Monitor, Server, Brain, Shield, AlertTriangle, Lightbulb } from 'lucide-react'
 import './PresentationSlides.css'
 
 interface Slide {

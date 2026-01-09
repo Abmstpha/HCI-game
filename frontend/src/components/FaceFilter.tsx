@@ -40,39 +40,61 @@ export default function FaceFilter({
     const canvasRef = useRef<HTMLCanvasElement>(null)
     const streamRef = useRef<MediaStream | null>(null)
     const processingRef = useRef<ReturnType<typeof setInterval> | null>(null)
+    const selectedFilterRef = useRef(selectedFilter)
+
+    // Keep ref in sync with state for use in interval
+    useEffect(() => {
+        selectedFilterRef.current = selectedFilter
+    }, [selectedFilter])
 
     const startCamera = async () => {
         setLoading(true)
         setError('')
+
         try {
+            console.log('Requesting camera access...')
             const stream = await navigator.mediaDevices.getUserMedia({
                 video: { width: { ideal: 1280 }, height: { ideal: 720 }, facingMode: 'user' }
             })
+            console.log('Camera stream obtained:', stream)
+
             streamRef.current = stream
+
             if (videoRef.current) {
                 videoRef.current.srcObject = stream
-                videoRef.current.onloadedmetadata = () => {
-                    videoRef.current?.play()
-                    setLoading(false)
-                    setIsStreaming(true)
-                    startFrameProcessing()
-                }
+
+                // Wait for video to be ready
+                await new Promise<void>((resolve) => {
+                    if (videoRef.current) {
+                        videoRef.current.onloadedmetadata = () => {
+                            console.log('Video metadata loaded')
+                            resolve()
+                        }
+                    }
+                })
+
+                await videoRef.current.play()
+                console.log('Video playing, dimensions:', videoRef.current.videoWidth, 'x', videoRef.current.videoHeight)
+
+                setLoading(false)
+                setIsStreaming(true)
+                startFrameProcessing()
             }
         } catch (err) {
             console.error('Camera error:', err)
-            setError('Could not access camera. Please allow camera permissions.')
+            setError(`Camera error: ${err instanceof Error ? err.message : 'Unknown error'}`)
             setLoading(false)
         }
     }
 
     const stopCamera = () => {
-        if (streamRef.current) {
-            streamRef.current.getTracks().forEach(track => track.stop())
-            streamRef.current = null
-        }
         if (processingRef.current) {
             clearInterval(processingRef.current)
             processingRef.current = null
+        }
+        if (streamRef.current) {
+            streamRef.current.getTracks().forEach(track => track.stop())
+            streamRef.current = null
         }
         setIsStreaming(false)
         setProcessedImage(null)
@@ -80,14 +102,22 @@ export default function FaceFilter({
     }
 
     const startFrameProcessing = () => {
+        console.log('Starting frame processing...')
+
         processingRef.current = setInterval(async () => {
-            if (!videoRef.current || !canvasRef.current) return
+            if (!videoRef.current || !canvasRef.current) {
+                console.log('No video or canvas ref')
+                return
+            }
 
             const video = videoRef.current
             const canvas = canvasRef.current
             const ctx = canvas.getContext('2d')
 
-            if (!ctx || video.videoWidth === 0) return
+            if (!ctx || video.videoWidth === 0) {
+                console.log('No context or video not ready')
+                return
+            }
 
             canvas.width = video.videoWidth
             canvas.height = video.videoHeight
@@ -95,31 +125,28 @@ export default function FaceFilter({
 
             canvas.toBlob(async (blob) => {
                 if (!blob) return
+
                 try {
                     const formData = new FormData()
                     formData.append('image', blob, 'frame.jpg')
-                    formData.append('filter', selectedFilter)
+                    formData.append('filter', selectedFilterRef.current)
 
                     const response = await axios.post(`${API_URL}/apply-filter`, formData, {
-                        timeout: 2000
+                        timeout: 3000
                     })
 
                     if (response.data && response.data.status === 'success') {
                         setProcessedImage(response.data.image)
                         setFaceDetected(response.data.face_detected || false)
+                    } else if (response.data && response.data.status === 'error') {
+                        console.error('Server error:', response.data.message)
                     }
                 } catch (err) {
-                    // Silently handle processing errors
                     console.error('Frame processing error:', err)
                 }
             }, 'image/jpeg', 0.8)
-        }, 100) // Process at ~10 FPS
+        }, 150) // Process at ~7 FPS for smoother experience
     }
-
-    // Update filter on the fly
-    useEffect(() => {
-        // Filter change is handled in the next frame automatically
-    }, [selectedFilter])
 
     // Cleanup on unmount
     useEffect(() => {
@@ -146,23 +173,21 @@ export default function FaceFilter({
             </motion.div>
 
             <div className="vision-content">
+                {/* Hidden video element - always in DOM */}
+                <video
+                    ref={videoRef}
+                    style={{ display: 'none' }}
+                    playsInline
+                    muted
+                    autoPlay
+                />
+                <canvas ref={canvasRef} style={{ display: 'none' }} />
+
                 {!isStreaming ? (
                     <div className="vision-intro">
-                        {/* Filter Selection */}
-                        <div className="filter-selection">
-                            <h3>Select a Filter:</h3>
-                            <div className="filter-grid">
-                                {FILTERS.map(filter => (
-                                    <button
-                                        key={filter.id}
-                                        className={`filter-btn ${selectedFilter === filter.id ? 'active' : ''}`}
-                                        onClick={() => setSelectedFilter(filter.id)}
-                                    >
-                                        <span className="filter-emoji">{filter.emoji}</span>
-                                        <span className="filter-name">{filter.name}</span>
-                                    </button>
-                                ))}
-                            </div>
+                        <div className="intro-text">
+                            <h3>📸 Face Filter Experience</h3>
+                            <p>Click the button below to start your camera and apply fun AR filters!</p>
                         </div>
 
                         <button
@@ -191,7 +216,7 @@ export default function FaceFilter({
                     </div>
                 ) : (
                     <div className="vision-stream">
-                        {/* Filter Selection - Compact */}
+                        {/* Filter Selection Bar - Above Camera */}
                         <div className="filter-bar">
                             {FILTERS.map(filter => (
                                 <button
@@ -206,16 +231,6 @@ export default function FaceFilter({
                         </div>
 
                         <div className="vision-video-container">
-                            {/* Hidden video for capture */}
-                            <video
-                                ref={videoRef}
-                                style={{ display: 'none' }}
-                                playsInline
-                                muted
-                            />
-                            {/* Hidden canvas for frame extraction */}
-                            <canvas ref={canvasRef} style={{ display: 'none' }} />
-
                             {/* Processed image display */}
                             {processedImage ? (
                                 <img
@@ -227,7 +242,7 @@ export default function FaceFilter({
                             ) : (
                                 <div className="loading-placeholder">
                                     <Loader2 className="animate-spin" size={40} />
-                                    <p>Processing...</p>
+                                    <p>Processing first frame...</p>
                                 </div>
                             )}
 
@@ -238,11 +253,14 @@ export default function FaceFilter({
                             </div>
 
                             {/* Face Detection Status */}
-                            {faceDetected && (
-                                <div className="face-detected-badge">
-                                    ✅ Face Detected
-                                </div>
-                            )}
+                            <div className={`face-status-badge ${faceDetected ? 'detected' : 'not-detected'}`}>
+                                {faceDetected ? '✅ Face Detected' : '❌ No Face'}
+                            </div>
+
+                            {/* Current Filter Label */}
+                            <div className="current-filter-badge">
+                                {FILTERS.find(f => f.id === selectedFilter)?.emoji} {FILTERS.find(f => f.id === selectedFilter)?.name}
+                            </div>
                         </div>
 
                         <button className="btn-vision-stop" onClick={stopCamera}>
@@ -260,53 +278,18 @@ export default function FaceFilter({
                     margin: 0 auto;
                 }
 
-                .filter-selection {
-                    margin-bottom: 2rem;
-                    width: 100%;
-                }
-
-                .filter-selection h3 {
-                    margin-bottom: 1rem;
-                    color: var(--text-primary);
-                }
-
-                .filter-grid {
-                    display: grid;
-                    grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
-                    gap: 0.75rem;
-                }
-
-                .filter-btn {
-                    display: flex;
-                    flex-direction: column;
-                    align-items: center;
-                    gap: 0.5rem;
-                    padding: 1rem;
-                    background: var(--bg-main);
-                    border: 2px solid var(--border);
-                    border-radius: 12px;
-                    cursor: pointer;
-                    transition: all 0.2s;
-                }
-
-                .filter-btn:hover {
-                    border-color: ${color};
-                    transform: translateY(-2px);
-                }
-
-                .filter-btn.active {
-                    border-color: ${color};
-                    background: ${color}20;
-                }
-
-                .filter-emoji {
-                    font-size: 2rem;
-                }
-
-                .filter-name {
-                    font-size: 0.75rem;
-                    color: var(--text-secondary);
+                .intro-text {
                     text-align: center;
+                    margin-bottom: 2rem;
+                }
+
+                .intro-text h3 {
+                    font-size: 1.5rem;
+                    margin-bottom: 0.5rem;
+                }
+
+                .intro-text p {
+                    color: var(--text-secondary);
                 }
 
                 .filter-bar {
@@ -315,6 +298,9 @@ export default function FaceFilter({
                     gap: 0.5rem;
                     margin-bottom: 1rem;
                     flex-wrap: wrap;
+                    padding: 0.5rem;
+                    background: var(--bg-card);
+                    border-radius: 12px;
                 }
 
                 .filter-pill {
@@ -322,7 +308,7 @@ export default function FaceFilter({
                     height: 48px;
                     border-radius: 50%;
                     border: 2px solid var(--border);
-                    background: var(--bg-card);
+                    background: var(--bg-main);
                     font-size: 1.5rem;
                     cursor: pointer;
                     transition: all 0.2s;
@@ -332,7 +318,7 @@ export default function FaceFilter({
                 }
 
                 .filter-pill:hover {
-                    transform: scale(1.1);
+                    transform: scale(1.15);
                     border-color: ${color};
                 }
 
@@ -340,6 +326,7 @@ export default function FaceFilter({
                     border-color: ${color};
                     background: ${color};
                     box-shadow: 0 0 20px ${color}80;
+                    transform: scale(1.1);
                 }
 
                 .loading-placeholder {
@@ -349,18 +336,39 @@ export default function FaceFilter({
                     justify-content: center;
                     min-height: 400px;
                     color: var(--text-secondary);
+                    background: var(--bg-card);
+                    border-radius: 12px;
                 }
 
-                .face-detected-badge {
+                .face-status-badge {
                     position: absolute;
                     bottom: 10px;
                     left: 10px;
-                    padding: 4px 10px;
-                    background: rgba(16, 185, 129, 0.9);
-                    border-radius: 4px;
+                    padding: 6px 12px;
+                    border-radius: 6px;
                     color: white;
-                    font-size: 0.7rem;
+                    font-size: 0.75rem;
                     font-weight: 700;
+                }
+
+                .face-status-badge.detected {
+                    background: rgba(16, 185, 129, 0.9);
+                }
+
+                .face-status-badge.not-detected {
+                    background: rgba(239, 68, 68, 0.9);
+                }
+                
+                .current-filter-badge {
+                    position: absolute;
+                    bottom: 10px;
+                    right: 10px;
+                    padding: 6px 12px;
+                    background: rgba(0, 0, 0, 0.7);
+                    border-radius: 6px;
+                    color: white;
+                    font-size: 0.75rem;
+                    font-weight: 600;
                 }
 
                 .btn-vision-stop {
@@ -380,6 +388,90 @@ export default function FaceFilter({
 
                 .btn-vision-stop:hover {
                     background: #fee2e2;
+                }
+
+                .vision-video-container {
+                    position: relative;
+                }
+
+                .vision-video {
+                    width: 100%;
+                    border-radius: 12px;
+                }
+
+                .vision-live-badge {
+                    position: absolute;
+                    top: 10px;
+                    right: 10px;
+                    display: flex;
+                    align-items: center;
+                    gap: 6px;
+                    padding: 4px 10px;
+                    background: rgba(239, 68, 68, 0.9);
+                    border-radius: 4px;
+                    color: white;
+                    font-size: 0.7rem;
+                    font-weight: 700;
+                }
+
+                .live-dot {
+                    width: 8px;
+                    height: 8px;
+                    background: white;
+                    border-radius: 50%;
+                    animation: pulse 1s infinite;
+                }
+
+                @keyframes pulse {
+                    0%, 100% { opacity: 1; }
+                    50% { opacity: 0.5; }
+                }
+
+                .btn-vision-start {
+                    display: flex;
+                    align-items: center;
+                    gap: 8px;
+                    padding: 1rem 2rem;
+                    background: linear-gradient(135deg, ${color}, #ec4899);
+                    border: none;
+                    border-radius: 12px;
+                    color: white;
+                    font-size: 1.1rem;
+                    font-weight: 600;
+                    cursor: pointer;
+                    transition: all 0.3s;
+                }
+
+                .btn-vision-start:hover:not(:disabled) {
+                    transform: translateY(-2px);
+                    box-shadow: 0 10px 30px ${color}40;
+                }
+
+                .btn-vision-start:disabled {
+                    opacity: 0.7;
+                    cursor: wait;
+                }
+
+                .vision-intro {
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    padding: 2rem;
+                }
+
+                .vision-stream {
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                }
+
+                .vision-error {
+                    margin-top: 1rem;
+                    padding: 1rem;
+                    background: #fef2f2;
+                    border: 1px solid #fecaca;
+                    border-radius: 8px;
+                    color: #dc2626;
                 }
             `}</style>
         </div>

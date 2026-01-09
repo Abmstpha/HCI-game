@@ -45,18 +45,32 @@ export default function MultilingualTest() {
     }
 
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
-      const recorder = new MediaRecorder(stream)
+      const stream = await navigator.mediaDevices.getUserMedia({
+        audio: {
+          echoCancellation: false,
+          autoGainControl: false,
+          noiseSuppression: false,
+          channelCount: 1
+        }
+      })
+
+      // Use specific codec for better compatibility
+      let options = {}
+      if (MediaRecorder.isTypeSupported('audio/webm;codecs=opus')) {
+        options = { mimeType: 'audio/webm;codecs=opus' }
+      } else if (MediaRecorder.isTypeSupported('audio/webm')) {
+        options = { mimeType: 'audio/webm' }
+      }
+
+      const recorder = new MediaRecorder(stream, options)
       const chunks: Blob[] = []
 
       recorder.ondataavailable = (e) => {
-        console.log('Chunk received, size:', e.data.size)
-        chunks.push(e.data)
+        if (e.data.size > 0) chunks.push(e.data)
       }
 
       recorder.onstop = async () => {
-        const blob = new Blob(chunks, { type: recorder.mimeType || 'audio/webm' })
-        console.log('Final audio blob size:', blob.size, 'bytes')
+        const blob = new Blob(chunks, { type: recorder.mimeType })
         await transcribeAudio(blob)
         stream.getTracks().forEach(track => track.stop())
       }
@@ -257,4 +271,3 @@ export default function MultilingualTest() {
     </div>
   )
 }
-

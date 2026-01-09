@@ -67,8 +67,25 @@ const VoiceEmotion = ({ title, description, color, icon: Icon }: VoiceEmotionPro
 
     const startRecording = async () => {
         try {
-            const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
-            const mediaRecorder = new MediaRecorder(stream)
+            // "Golden Standard" Pipeline from SpeechVsTyping
+            const stream = await navigator.mediaDevices.getUserMedia({
+                audio: {
+                    echoCancellation: false,
+                    autoGainControl: false,
+                    noiseSuppression: false,
+                    channelCount: 1
+                }
+            })
+
+            // Use specific codec for better compatibility
+            let options = {}
+            if (MediaRecorder.isTypeSupported('audio/webm;codecs=opus')) {
+                options = { mimeType: 'audio/webm;codecs=opus' }
+            } else if (MediaRecorder.isTypeSupported('audio/webm')) {
+                options = { mimeType: 'audio/webm' }
+            }
+
+            const mediaRecorder = new MediaRecorder(stream, options)
             mediaRecorderRef.current = mediaRecorder
             audioChunksRef.current = []
 
@@ -79,7 +96,14 @@ const VoiceEmotion = ({ title, description, color, icon: Icon }: VoiceEmotionPro
             }
 
             mediaRecorder.onstop = async () => {
-                const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/wav' })
+                // Use the actual mimeType of the recorder
+                const audioBlob = new Blob(audioChunksRef.current, { type: mediaRecorder.mimeType })
+                console.log('Audio blob size:', audioBlob.size, 'bytes, type:', audioBlob.type)
+
+                if (audioBlob.size < 3000) {
+                    setError('Audio too short or silent. Check microphone.')
+                }
+
                 await analyzeAudio(audioBlob)
                 stream.getTracks().forEach(track => track.stop())
             }

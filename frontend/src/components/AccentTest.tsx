@@ -55,7 +55,7 @@ export default function AccentTest() {
 
       recorder.onstop = async () => {
         const blob = new Blob(chunks, { type: recorder.mimeType })
-        await transcribeAudio(blob, 'accent')
+        await transcribeAudio(blob)
         stream.getTracks().forEach(track => track.stop())
       }
 

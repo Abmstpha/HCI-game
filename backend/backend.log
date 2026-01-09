@@ -1,0 +1,27 @@
+INFO:     Will watch for changes in these directories: ['/Users/abdu07/Desktop/PGE5/Human-interaction/UI_FUN/backend']
+INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+INFO:     Started reloader process [40013] using StatReload
+INFO:     Started server process [40079]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     127.0.0.1:58235 - "POST /accuracy HTTP/1.1" 200 OK
+INFO:main:Received audio data size: 1598 bytes
+INFO:main:Audio filename: recording.wav, content_type: audio/webm;codecs=opus
+INFO:main:Audio header (hex): 1a45dfa39f4286810142f7810142f2810442f381
+INFO:main:Attempting pydub conversion...
+INFO:main:Pydub loaded: duration=5580ms, channels=1, sample_width=4
+INFO:main:Exported WAV size: 1071404 bytes
+INFO:main:AudioData created, sample_rate=48000, sample_width=4
+INFO:main:Calling Google Speech API with language=en-US...
+INFO:     127.0.0.1:58238 - "POST /transcribe HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58348 - "POST /accuracy HTTP/1.1" 200 OK
+INFO:main:Received audio data size: 246960 bytes
+INFO:main:Audio filename: recording.wav, content_type: audio/webm;codecs=opus
+INFO:main:Audio header (hex): 1a45dfa39f4286810142f7810142f2810442f381
+INFO:main:Attempting pydub conversion...
+INFO:main:Pydub loaded: duration=15360ms, channels=1, sample_width=4
+INFO:main:Exported WAV size: 2949164 bytes
+INFO:main:AudioData created, sample_rate=48000, sample_width=4
+INFO:main:Calling Google Speech API with language=en-US...
+INFO:main:Transcription result: 'hey the quick brown fox jumps over the lazy dog the lazy dog'
+INFO:     127.0.0.1:58362 - "POST /transcribe HTTP/1.1" 200 OK

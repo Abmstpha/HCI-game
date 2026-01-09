@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { motion } from 'framer-motion'
 import { Mic, Keyboard, Play } from 'lucide-react'
 import axios from 'axios'
@@ -20,6 +20,11 @@ export default function SpeechVsTyping() {
   const [speechResult, setSpeechResult] = useState<TestResult | null>(null)
   const [isRecording, setIsRecording] = useState(false)
   const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(null)
+
+  // Audio Analysis State
+  const [volume, setVolume] = useState(0)
+  const analysisRef = useRef<number>(0)
+  const audioContextRef = useRef<AudioContext | null>(null)
 
   const startTypingTest = () => {
     setStep('typing')
@@ -67,6 +72,17 @@ export default function SpeechVsTyping() {
         }
       })
 
+      // Signal Analysis
+      const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)()
+      const source = audioContext.createMediaStreamSource(stream)
+      const analyser = audioContext.createAnalyser()
+      analyser.fftSize = 256
+      source.connect(analyser)
+      audioContextRef.current = audioContext
+
+      const bufferLength = analyser.frequencyBinCount
+      const dataArray = new Uint8Array(bufferLength)
+
       // Use specific codec for better compatibility
       let options = {}
       if (MediaRecorder.isTypeSupported('audio/webm;codecs=opus')) {
@@ -83,9 +99,20 @@ export default function SpeechVsTyping() {
       }
 
       recorder.onstop = async () => {
+        cancelAnimationFrame(analysisRef.current)
+        if (audioContextRef.current) {
+          audioContextRef.current.close()
+        }
+
         // Use the actual mimeType of the recorder
         const blob = new Blob(chunks, { type: recorder.mimeType })
         console.log('Audio blob size:', blob.size, 'bytes, type:', blob.type)
+
+        // Safety check for silence
+        if (blob.size < 3000) {
+          alert("⚠️ Warning: Audio file is extremely small. Check if your microphone is muted!")
+        }
+
         await transcribeAudio(blob)
         stream.getTracks().forEach(track => track.stop())
       }
@@ -93,6 +120,14 @@ export default function SpeechVsTyping() {
       recorder.start()
       setMediaRecorder(recorder)
       setIsRecording(true)
+      // Restart volume loop with correct flag
+      analysisRef.current = requestAnimationFrame(function loop() {
+        analyser.getByteFrequencyData(dataArray)
+        const avg = dataArray.reduce((a, b) => a + b) / bufferLength
+        setVolume(avg)
+        analysisRef.current = requestAnimationFrame(loop)
+      })
+
     } catch (error) {
       console.error('Error accessing microphone:', error)
       alert('Please allow microphone access!')
@@ -104,6 +139,7 @@ export default function SpeechVsTyping() {
       mediaRecorder.stop()
       setIsRecording(false)
       setMediaRecorder(null)
+      cancelAnimationFrame(analysisRef.current)
     }
   }
 
@@ -209,10 +245,19 @@ export default function SpeechVsTyping() {
           <h3>🎤 Speak the sentence clearly:</h3>
 
           {isRecording && (
-            <div className="audio-visualizer">
-              {[...Array(5)].map((_, i) => (
-                <div key={i} className="visualizer-bar" />
-              ))}
+            <div style={{ textAlign: 'center', margin: '1rem 0' }}>
+              <div style={{ width: '200px', height: '10px', background: '#333', margin: '0 auto', borderRadius: '5px', overflow: 'hidden' }}>
+                <div style={{
+                  width: `${Math.min(100, (volume / 30) * 100)}%`,
+                  height: '100%',
+                  background: volume > 10 ? '#4ade80' : '#ef4444',
+                  transition: 'width 0.1s ease-out'
+                }} />
+              </div>
+              <p style={{ fontSize: '0.8rem', color: volume > 5 ? '#aaa' : '#ef4444', marginTop: '0.5rem', fontWeight: 500 }}>
+                {volume > 5 ? 'Microphone Active' : '⚠️ NO AUDIO DETECTED'}
+              </p>
+              <p style={{ fontSize: '0.7rem', color: '#666' }}>Level: {volume.toFixed(0)}</p>
             </div>
           )}
 

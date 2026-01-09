@@ -62,7 +62,7 @@ export default function NoiseTest() {
 
       recorder.onstop = async () => {
         const blob = new Blob(chunks, { type: recorder.mimeType })
-        await transcribeAudio(blob, 'noise')
+        await transcribeAudio(blob)
         stream.getTracks().forEach(track => track.stop())
       }
 

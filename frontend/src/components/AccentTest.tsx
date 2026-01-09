@@ -31,31 +31,22 @@ export default function AccentTest() {
 
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
-
-      // Detect supported MIME type
-      const mimeType = MediaRecorder.isTypeSupported('audio/webm;codecs=opus')
-        ? 'audio/webm;codecs=opus'
-        : MediaRecorder.isTypeSupported('audio/webm')
-          ? 'audio/webm'
-          : 'audio/mp4'
-
-      const recorder = new MediaRecorder(stream, { mimeType })
+      const recorder = new MediaRecorder(stream)
       const chunks: Blob[] = []
 
       recorder.ondataavailable = (e) => {
-        if (e.data.size > 0) {
-          chunks.push(e.data)
-        }
+        console.log('Chunk received, size:', e.data.size)
+        chunks.push(e.data)
       }
 
       recorder.onstop = async () => {
-        const blob = new Blob(chunks, { type: mimeType })
-        console.log('Audio blob size:', blob.size, 'bytes')
+        const blob = new Blob(chunks, { type: recorder.mimeType || 'audio/webm' })
+        console.log('Final audio blob size:', blob.size, 'bytes')
         await transcribeAudio(blob)
         stream.getTracks().forEach(track => track.stop())
       }
 
-      recorder.start(100)
+      recorder.start()
       setMediaRecorder(recorder)
       setIsRecording(true)
     } catch (error) {

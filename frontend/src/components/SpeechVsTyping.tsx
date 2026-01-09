@@ -58,36 +58,27 @@ export default function SpeechVsTyping() {
   const startRecording = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
-
-      // Detect supported MIME type
-      const mimeType = MediaRecorder.isTypeSupported('audio/webm;codecs=opus')
-        ? 'audio/webm;codecs=opus'
-        : MediaRecorder.isTypeSupported('audio/webm')
-          ? 'audio/webm'
-          : 'audio/mp4'
-
-      const recorder = new MediaRecorder(stream, { mimeType })
+      const recorder = new MediaRecorder(stream)
       const chunks: Blob[] = []
 
       recorder.ondataavailable = (e) => {
-        if (e.data.size > 0) {
-          chunks.push(e.data)
-        }
+        console.log('Chunk received, size:', e.data.size)
+        chunks.push(e.data)
       }
 
       recorder.onstop = async () => {
-        const blob = new Blob(chunks, { type: mimeType })
-        console.log('Audio blob size:', blob.size, 'bytes, type:', blob.type)
+        // Combine all chunks into a single blob
+        const blob = new Blob(chunks, { type: recorder.mimeType || 'audio/webm' })
+        console.log('Final audio blob size:', blob.size, 'bytes, type:', blob.type, 'chunks:', chunks.length)
         await transcribeAudio(blob)
         stream.getTracks().forEach(track => track.stop())
       }
 
-      // Start with 100ms timeslice to ensure data is captured
-      recorder.start(100)
+      // Start recording without timeslice - browser will fire ondataavailable on stop
+      recorder.start()
       setMediaRecorder(recorder)
       setIsRecording(true)
-        // Store start time for minimum duration check
-        ; (window as unknown as Record<string, number>).recordingStartTime = Date.now()
+      console.log('Recording started, mimeType:', recorder.mimeType)
     } catch (error) {
       console.error('Error accessing microphone:', error)
       alert('Please allow microphone access!')
@@ -95,21 +86,8 @@ export default function SpeechVsTyping() {
   }
 
   const stopRecording = () => {
-    if (mediaRecorder) {
-      // Enforce minimum 1.5 second recording
-      const startTime = (window as unknown as Record<string, number>).recordingStartTime || 0
-      const elapsed = Date.now() - startTime
-      if (elapsed < 1500) {
-        const remaining = 1500 - elapsed
-        setTimeout(() => {
-          if (mediaRecorder && mediaRecorder.state === 'recording') {
-            mediaRecorder.stop()
-            setIsRecording(false)
-            setMediaRecorder(null)
-          }
-        }, remaining)
-        return
-      }
+    if (mediaRecorder && mediaRecorder.state === 'recording') {
+      console.log('Stopping recording...')
       mediaRecorder.stop()
       setIsRecording(false)
       setMediaRecorder(null)

@@ -974,3 +974,69 @@ body {
 .vision-video-container {
   position: relative;
 }
+
+/* System Presentation Button */
+.system-presentation-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1.5rem;
+  background-color: rgba(255, 255, 255, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  border-radius: 9999px;
+  color: black;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  margin-top: 1rem;
+}
+
+.system-presentation-btn:hover {
+  background-color: #ffffff;
+  transform: scale(1.05);
+  box-shadow: 0 4px 12px rgba(255, 255, 255, 0.2);
+}
+
+.system-presentation-btn:active {
+  transform: scale(0.95);
+}
+
+.system-presentation-btn svg {
+  transition: color 0.2s;
+}
+
+.system-presentation-btn:hover svg.book-icon {
+  color: #06b6d4;
+  /* cyan-500 - darker for white bg */
+}
+
+.system-presentation-btn:hover svg.play-icon {
+  color: #000000;
+  /* black */
+}
+/* Header Layout Fix */
+.header-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 3rem;
+}
+
+.header-title-row {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 0.5rem;
+}
+
+.header-subtitle {
+  font-size: 1.25rem;
+  color: #9ca3af;
+  font-weight: 300;
+  margin-bottom: 1.5rem;
+  letter-spacing: 0.025em;
+  margin-top: 0;
+}

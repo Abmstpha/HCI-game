@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Mic, Type, Globe, Volume2, Sparkles, Home, Hand, Activity, Smile, Podcast, Eye } from 'lucide-react'
+import { Mic, Type, Globe, Volume2, Sparkles, Home, Hand, Activity, Smile, Podcast, Eye, Camera } from 'lucide-react'
 import './App.css'
 import SpeechVsTyping from './components/SpeechVsTyping'
 import AccentTest from './components/AccentTest'
@@ -9,8 +9,9 @@ import MultilingualTest from './components/MultilingualTest'
 import VisionExperience from './components/VisionExperience'
 import VoiceEmotion from './components/VoiceEmotion'
 import GazeTracking from './components/GazeTracking'
+import FaceFilter from './components/FaceFilter'
 
-type ExperimentId = null | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9
+type ExperimentId = null | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10
 
 function App() {
   const [activeExperiment, setActiveExperiment] = useState<ExperimentId>(null)
@@ -87,6 +88,14 @@ function App() {
       icon: Eye,
       color: 'linear-gradient(135deg, #14b8a6, #06b6d4)',
       bgGlow: 'bg-teal-500/20'
+    },
+    {
+      id: 10 as const,
+      title: 'Face Filters',
+      description: 'Snapchat-style AR filters',
+      icon: Camera,
+      color: 'linear-gradient(135deg, #8b5cf6, #ec4899)',
+      bgGlow: 'bg-violet-500/20'
     }
   ]
 
@@ -170,6 +179,14 @@ function App() {
             description="Real-time eye tracking using Dlib landmarks"
             color="linear-gradient(135deg, #14b8a6, #06b6d4)"
             icon={Eye}
+          />
+        )
+      case 10:
+        return (
+          <FaceFilter
+            title="Face Filters"
+            description="Apply Snapchat-style AR filters to your face!"
+            color="linear-gradient(135deg, #8b5cf6, #ec4899)"
           />
         )
       default:
